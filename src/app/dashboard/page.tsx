@@ -1,11 +1,11 @@
 import {
   ArrowRight,
   Brain,
-  Sparkles,
   CalendarClock,
   FileText,
   Plus,
   Radio,
+  Sparkles,
   Users,
 } from "lucide-react";
 import Link from "next/link";

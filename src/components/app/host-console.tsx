@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { QuestionEditor } from "@/components/app/question-editor";
 import { Button } from "@/components/ui/button";
 import type {
   Participant,
@@ -330,33 +331,19 @@ export function HostConsole({ quizId }: { quizId: string }) {
           </h2>
           <p className="mt-1 text-sm text-neutral-500">
             {data.questions.length} soal pilihan ganda
+            {data.quiz.status === "waiting"
+              ? " · dapat diedit sebelum kuis dimulai"
+              : " · edit dikunci setelah kuis dimulai"}
           </p>
           <div className="mt-5 max-h-[34rem] space-y-3 overflow-y-auto pr-1">
             {data.questions.map((question) => (
-              <details
+              <QuestionEditor
                 key={question.id}
-                className="group rounded-xl border border-neutral-200 bg-neutral-50/60 p-4 open:bg-white"
-              >
-                <summary className="cursor-pointer list-none pr-3 text-sm font-bold leading-relaxed text-neutral-900">
-                  <span className="mr-2 text-orange-600">
-                    {question.position + 1}.
-                  </span>
-                  {question.prompt}
-                </summary>
-                <div className="mt-4 space-y-2">
-                  {question.options.map((option, index) => (
-                    <p
-                      key={`${index}-${option}`}
-                      className={`rounded-lg px-3 py-2 text-sm ${index === question.correct_index ? "bg-emerald-50 font-semibold text-emerald-800" : "bg-white text-neutral-600"}`}
-                    >
-                      {String.fromCharCode(65 + index)}. {option}
-                    </p>
-                  ))}
-                  <p className="pt-2 text-xs leading-relaxed text-neutral-500">
-                    {question.explanation}
-                  </p>
-                </div>
-              </details>
+                quizId={quizId}
+                question={question}
+                canEdit={data.quiz.status === "waiting"}
+                onSaved={load}
+              />
             ))}
           </div>
         </section>

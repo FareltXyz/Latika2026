@@ -19,7 +19,7 @@ const faqs = [
   {
     question: "Tipe soal apa saja yang bisa dihasilkan?",
     answer:
-      "Saat ini sistem menghasilkan soal pilihan ganda dengan empat opsi, satu jawaban benar, dan pembahasan singkat. Jumlah soal dapat dipilih antara 5 hingga 15.",
+      "Saat ini sistem menghasilkan soal pilihan ganda dengan empat opsi, satu jawaban benar, dan pembahasan singkat. Jumlah soal dapat dipilih antara 5 hingga 25.",
   },
   {
     question: "Apakah dokumen saya aman?",

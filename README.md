@@ -7,8 +7,9 @@ Aplikasi Next.js untuk mengubah dokumen soal PDF atau Word menjadi kuis pilihan 
 - Login pengajar dengan Google atau email + kata sandi
 - Verifikasi email melalui Supabase Auth
 - Popup panduan penggunaan saat situs pertama kali dibuka
-- Generasi 5–15 soal dari PDF atau Word `.docx` (maksimal 4 MB)
+- Generasi 5–25 soal dari PDF atau Word `.docx` (maksimal 4 MB)
 - AI mengikuti kunci jawaban yang tertulis di dokumen; bila tidak ada kunci, AI menyelesaikan soal sebelum membuat kuis
+- Pertanyaan, pilihan, kunci jawaban, dan pembahasan dapat diedit sebelum kuis dimulai
 - Kode ruang kuis, lobby peserta, dan kontrol mulai/selesai
 - Durasi kuis dari host, hitung mundur, serta pengiriman otomatis saat waktu habis
 - Musik latar otomatis yang berulang selama peserta mengerjakan kuis, dengan kontrol suara jika autoplay diblokir browser
@@ -16,6 +17,7 @@ Aplikasi Next.js untuk mengubah dokumen soal PDF atau Word menjadi kuis pilihan 
 - Penilaian otomatis, rekap nilai, jawaban salah, kunci, dan pembahasan
 - Masa simpan kuis 3 atau 5 hari, cleanup otomatis, dan tombol hapus untuk kuis yang sudah selesai
 - Dokumen diproses saat generasi dan tidak disimpan di database aplikasi
+- Halaman kebijakan privasi menjelaskan pemrosesan dokumen, penyimpanan data, dan layanan pihak ketiga
 - Siap dijalankan di Vercel dengan Supabase dan Vercel AI Gateway
 
 ## Menjalankan lokal
