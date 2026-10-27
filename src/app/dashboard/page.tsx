@@ -1,5 +1,10 @@
 import {
   ArrowRight,
+  Brain,
+  FileText,
+  Plus,
+  Radio,
+  Sparkles,
   CalendarClock,
   FileText,
   Plus,
@@ -79,7 +84,43 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </section>
+      <section className="group relative mt-6 overflow-hidden rounded-[2rem] border border-blue-500/20 bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-950 px-6 py-9 text-white shadow-xl shadow-indigo-950/20 sm:px-10 sm:py-11">
+        {/* Glow ambient effects */}
+        <div className="pointer-events-none absolute -right-20 -top-24 size-80 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 -bottom-20 size-72 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute right-1/4 -bottom-16 size-60 rounded-full bg-indigo-500/30 blur-2xl" />
 
+        {/* Decorative brain watermark */}
+        <div className="pointer-events-none absolute -right-6 -bottom-10 text-white/10 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:text-white/[0.14] sm:-right-4 sm:-bottom-8">
+          <Brain className="size-64 stroke-[1.25] sm:size-80" />
+        </div>
+
+        <div className="relative flex flex-col justify-between gap-7 md:flex-row md:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3.5 py-1 text-xs font-semibold text-cyan-200 backdrop-blur-md">
+              <Sparkles className="size-3.5 text-cyan-300 animate-pulse" />
+              <span>Flash Memory</span>
+              <span className="rounded-full bg-cyan-400 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-blue-950">
+                Baru
+              </span>
+            </div>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Latih Ingatan & Hafalanmu.
+            </h2>
+            <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-blue-100/85 sm:text-base">
+              Perkuat penguasaan materi dengan kartu memori interaktif berbasis
+              repetisi bertahap (spaced repetition) untuk daya ingat maksimal.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/flash-memory"
+            className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 font-bold text-blue-950 shadow-lg shadow-black/10 transition hover:bg-blue-50 hover:shadow-xl active:scale-[0.98]"
+          >
+            Mulai Latihan{" "}
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      </section>
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         {[
           { icon: FileText, label: "Total kuis", value: quizzes?.length ?? 0 },

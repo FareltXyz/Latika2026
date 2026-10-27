@@ -35,3 +35,34 @@ export type QuizResult = {
   total: number;
   review: QuizReviewItem[];
 };
+
+export type FlashMemoryDifficulty = "mudah" | "sedang" | "sulit";
+
+export type FlashMemoryCard = {
+  id: string;
+  position: number;
+  term: string;
+  definition: string;
+  category: string;
+  memory_tip: string;
+};
+
+export type FlashMemorySetSummary = {
+  id: string;
+  title: string;
+  description: string;
+  source_name: string;
+  difficulty: FlashMemoryDifficulty;
+  best_score: number;
+  best_time_seconds: number | null;
+  plays_count: number;
+  cards_count: number;
+  created_at: string;
+};
+
+export type FlashMemorySetDetail = Omit<
+  FlashMemorySetSummary,
+  "cards_count"
+> & {
+  cards: FlashMemoryCard[];
+};
