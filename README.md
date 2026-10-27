@@ -59,11 +59,13 @@ Tambahkan variabel berikut untuk Production dan Preview melalui **Vercel Project
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-AI_GATEWAY_API_KEY (opsional di deployment Vercel yang memakai OIDC)
+GOOGLE_GENERATIVE_AI_API_KEY (direkomendasikan jika memakai Google AI Studio)
+GOOGLE_AI_MODEL=gemini-2.5-flash
+AI_GATEWAY_API_KEY (alternatif; tidak wajib jika Google API key tersedia)
 AI_MODEL=google/gemini-3.8-flash
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` dan `AI_GATEWAY_API_KEY` tidak boleh memakai prefix `NEXT_PUBLIC_`.
+`SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, dan `AI_GATEWAY_API_KEY` tidak boleh memakai prefix `NEXT_PUBLIC_`. Jika key Google dan Gateway sama-sama tersedia, aplikasi memprioritaskan Google API secara langsung.
 
 ## Deploy ke Vercel
 

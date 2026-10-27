@@ -1,11 +1,7 @@
 import { randomInt } from "node:crypto";
 
-import {
-  APICallError,
-  generateText,
-  NoObjectGeneratedError,
-  Output,
-} from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { APICallError, generateText, NoObjectGeneratedError, Output } from "ai";
 import { z } from "zod";
 
 import { getCurrentUserId } from "@/lib/auth";
@@ -46,6 +42,10 @@ function createJoinCode() {
 }
 
 function generationErrorResponse(error: unknown) {
+  const usesGoogleDirect = Boolean(
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim(),
+  );
+
   if (
     error instanceof Error &&
     (error.name === "GatewayError" ||
@@ -64,13 +64,21 @@ function generationErrorResponse(error: unknown) {
 
   if (APICallError.isInstance(error)) {
     const status = error.statusCode;
-    const messages: Record<number, string> = {
-      401: "Autentikasi AI Gateway gagal. Periksa AI_GATEWAY_API_KEY atau koneksi OIDC Vercel.",
-      402: "Kredit atau budget AI Gateway tidak mencukupi. Tambahkan kredit atau periksa batas budget di Vercel.",
-      403: "AI Gateway belum dapat digunakan. Selesaikan verifikasi akun atau metode pembayaran di Vercel.",
-      429: "AI Gateway sedang terkena batas permintaan. Tunggu sebentar lalu coba lagi.",
-      503: "Model AI sedang tidak tersedia. Tunggu sebentar lalu coba lagi.",
-    };
+    const messages: Record<number, string> = usesGoogleDirect
+      ? {
+          400: "Google API key atau permintaan Gemini tidak valid. Periksa GOOGLE_GENERATIVE_AI_API_KEY dan model yang dipakai.",
+          401: "Google API key tidak valid atau sudah dinonaktifkan.",
+          403: "Google Gemini API menolak akses. Periksa API restrictions, quota, dan billing pada project Google.",
+          429: "Quota Google Gemini API sudah tercapai. Tunggu hingga quota tersedia atau naikkan batasnya.",
+          503: "Google Gemini sedang tidak tersedia. Tunggu sebentar lalu coba lagi.",
+        }
+      : {
+          401: "Autentikasi AI Gateway gagal. Periksa AI_GATEWAY_API_KEY atau koneksi OIDC Vercel.",
+          402: "Kredit atau budget AI Gateway tidak mencukupi. Tambahkan kredit atau periksa batas budget di Vercel.",
+          403: "AI Gateway belum dapat digunakan. Selesaikan verifikasi akun atau metode pembayaran di Vercel.",
+          429: "AI Gateway sedang terkena batas permintaan. Tunggu sebentar lalu coba lagi.",
+          503: "Model AI sedang tidak tersedia. Tunggu sebentar lalu coba lagi.",
+        };
 
     console.error("Quiz AI request failed", {
       statusCode: status,
@@ -82,7 +90,9 @@ function generationErrorResponse(error: unknown) {
       {
         error:
           (status ? messages[status] : undefined) ??
-          "Layanan AI gagal membaca PDF. Periksa AI Gateway Logs di Vercel.",
+          (usesGoogleDirect
+            ? "Google Gemini gagal membaca PDF. Periksa konfigurasi dan quota API key."
+            : "Layanan AI gagal membaca PDF. Periksa AI Gateway Logs di Vercel."),
       },
       { status: status && status >= 400 && status < 600 ? status : 502 },
     );
@@ -142,9 +152,18 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+    const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
+    const hasGatewayAuth = Boolean(
+      process.env.AI_GATEWAY_API_KEY?.trim() ||
+        process.env.VERCEL_OIDC_TOKEN?.trim(),
+    );
+
+    if (!googleApiKey && !hasGatewayAuth) {
       return Response.json(
-        { error: "AI Gateway belum dikonfigurasi di server." },
+        {
+          error:
+            "AI belum dikonfigurasi. Tambahkan GOOGLE_GENERATIVE_AI_API_KEY atau AI_GATEWAY_API_KEY di Vercel.",
+        },
         { status: 503 },
       );
     }
@@ -206,8 +225,13 @@ export async function POST(request: Request) {
     }
 
     const pdf = new Uint8Array(await file.arrayBuffer());
+    const model = googleApiKey
+      ? createGoogleGenerativeAI({ apiKey: googleApiKey })(
+          process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash",
+        )
+      : (process.env.AI_MODEL ?? "google/gemini-3.8-flash");
     const { output } = await generateText({
-      model: process.env.AI_MODEL ?? "google/gemini-3.8-flash",
+      model,
       output: Output.object({
         name: "QuizDariPDF",
         description: "Kuis pilihan ganda berbahasa Indonesia berdasarkan PDF",
