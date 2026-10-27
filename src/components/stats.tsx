@@ -1,6 +1,6 @@
 const stats = [
   { value: "6", label: "Karakter Kode Kuis" },
-  { value: "15", label: "Soal per Generasi" },
+  { value: "25", label: "Soal per Generasi" },
   { value: "4", label: "Opsi per Soal" },
   { value: "100%", label: "Penilaian Otomatis" },
 ];

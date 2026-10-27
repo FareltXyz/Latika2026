@@ -45,7 +45,7 @@ const generatedQuizSchema = z.object({
       }),
     )
     .min(3)
-    .max(15),
+    .max(25),
 });
 
 function createJoinCode() {
@@ -223,7 +223,7 @@ export async function POST(request: Request) {
     const requestedDuration = Number(formData.get("durationMinutes") ?? 20);
     const requestedRetention = Number(formData.get("retentionDays") ?? 3);
     const difficulty = String(formData.get("difficulty") ?? "sedang");
-    const questionCount = Math.min(15, Math.max(3, requestedCount));
+    const questionCount = Math.min(25, Math.max(3, requestedCount));
     const durationMinutes = Math.min(180, Math.max(5, requestedDuration));
     const retentionDays = requestedRetention === 5 ? 5 : 3;
 
@@ -350,7 +350,7 @@ export async function POST(request: Request) {
       generateText({
         model: selectedModel,
         maxRetries,
-        maxOutputTokens: 8_192,
+        maxOutputTokens: 16_384,
         timeout: { totalMs: timeoutMs },
         output: Output.object({
           name: "KuisDariDokumen",

@@ -7,11 +7,14 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 
 type Feature = {
   icon: LucideIcon;
   title: string;
   description: string;
+  href?: string;
+  linkLabel?: string;
 };
 
 const features: Feature[] = [
@@ -26,6 +29,8 @@ const features: Feature[] = [
     title: "Upload PDF & Word",
     description:
       "Cukup drag & drop dokumen soal PDF atau Word (.docx) hingga 4 MB. File tidak disimpan permanen setelah diproses.",
+    href: "/privacy",
+    linkLabel: "Baca kebijakan privasi",
   },
   {
     icon: ListChecks,
@@ -95,6 +100,14 @@ export function Features() {
                 <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
                   {feature.description}
                 </p>
+                {feature.href && feature.linkLabel && (
+                  <Link
+                    href={feature.href}
+                    className="mt-4 inline-flex text-sm font-bold text-orange-600 underline decoration-orange-200 underline-offset-4 transition hover:text-orange-700 hover:decoration-orange-500"
+                  >
+                    {feature.linkLabel}
+                  </Link>
+                )}
               </div>
             </article>
           ))}

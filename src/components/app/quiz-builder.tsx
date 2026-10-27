@@ -209,7 +209,7 @@ export function QuizBuilder() {
             onChange={(event) => setQuestionCount(event.target.value)}
             className="mt-2 h-12 w-full rounded-xl border border-neutral-300 bg-white px-4 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
           >
-            {[5, 8, 10, 12, 15].map((count) => (
+            {[5, 8, 10, 12, 15, 20, 25].map((count) => (
               <option key={count} value={count}>
                 {count} soal
               </option>
