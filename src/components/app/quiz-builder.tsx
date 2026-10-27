@@ -11,6 +11,45 @@ import {
 
 import { Button } from "@/components/ui/button";
 
+const MAX_PDF_SIZE = 4 * 1024 * 1024;
+
+type GenerateQuizResponse = {
+  error?: string;
+  quizId?: string;
+};
+
+async function readGenerateResponse(response: Response) {
+  const rawResponse = await response.text();
+
+  if (rawResponse) {
+    try {
+      return JSON.parse(rawResponse) as GenerateQuizResponse;
+    } catch {
+      // Vercel may return a plain-text or HTML error before the API route runs.
+    }
+  }
+
+  if (response.status === 413) {
+    return {
+      error:
+        "Ukuran PDF terlalu besar untuk dikirim. Gunakan PDF maksimal 4 MB atau kompres PDF terlebih dahulu.",
+    };
+  }
+
+  if ([500, 502, 503, 504].includes(response.status)) {
+    return {
+      error:
+        "Server atau layanan AI sedang sibuk. Tunggu sebentar lalu coba generate lagi.",
+    };
+  }
+
+  return {
+    error: response.ok
+      ? "Respons server tidak dapat dibaca. Silakan coba generate lagi."
+      : `Kuis gagal dibuat (HTTP ${response.status}). Silakan coba lagi.`,
+  };
+}
+
 export function QuizBuilder() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -31,8 +70,8 @@ export function QuizBuilder() {
       setError("Pilih file dengan format PDF.");
       return;
     }
-    if (selected.size > 8 * 1024 * 1024) {
-      setError("Ukuran PDF maksimal 8 MB.");
+    if (selected.size > MAX_PDF_SIZE) {
+      setError("Ukuran PDF maksimal 4 MB agar dapat diproses di Vercel.");
       return;
     }
     setFile(selected);
@@ -66,10 +105,16 @@ export function QuizBuilder() {
     try {
       const response = await fetch("/api/quizzes/generate", {
         method: "POST",
+        headers: { Accept: "application/json" },
         body: formData,
       });
-      const data = await response.json();
+      const data = await readGenerateResponse(response);
       if (!response.ok) throw new Error(data.error ?? "Kuis gagal dibuat.");
+      if (!data.quizId) {
+        throw new Error(
+          data.error ?? "Server tidak mengirim ID kuis. Silakan coba lagi.",
+        );
+      }
       router.push(`/dashboard/quiz/${data.quizId}`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Kuis gagal dibuat.");
@@ -86,7 +131,7 @@ export function QuizBuilder() {
           </span>
           <div>
             <h2 className="font-bold text-neutral-950">Unggah materi</h2>
-            <p className="text-sm text-neutral-500">PDF maksimal 8 MB</p>
+            <p className="text-sm text-neutral-500">PDF maksimal 4 MB</p>
           </div>
         </div>
 

@@ -10,7 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MAX_PDF_SIZE = 8 * 1024 * 1024;
+// Keep the complete multipart request below Vercel Functions' 4.5 MB limit.
+const MAX_PDF_SIZE = 4 * 1024 * 1024;
 const DAILY_GENERATION_LIMIT = 10;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -196,7 +197,10 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_PDF_SIZE) {
       return Response.json(
-        { error: "Ukuran PDF maksimal 8 MB untuk versi ini." },
+        {
+          error:
+            "Ukuran PDF maksimal 4 MB agar dapat diproses di Vercel. Kompres PDF lalu coba lagi.",
+        },
         { status: 413 },
       );
     }
