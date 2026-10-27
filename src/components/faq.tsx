@@ -14,17 +14,17 @@ const faqs = [
   {
     question: "Apakah ada batas jumlah halaman untuk file PDF?",
     answer:
-      "Pada paket gratis, kamu bisa mengunggah PDF dengan panjang hingga 100 halaman per dokumen. Untuk kebutuhan materi yang lebih panjang seperti buku lengkap atau modul tebal, tersedia paket premium yang mendukung hingga 500 halaman per dokumen.",
+      "Versi awal membatasi ukuran file hingga 8 MB. Jika PDF lebih besar, kompres atau pecah dokumen menjadi beberapa bagian sebelum diunggah.",
   },
   {
     question: "Tipe soal apa saja yang bisa dihasilkan?",
     answer:
-      "Saat ini AI kami mampu menghasilkan tiga tipe soal utama: pilihan ganda (dengan 4 opsi jawaban), benar/salah, dan isian singkat. Kamu bisa memilih kombinasi tipe soal sesuai preferensi sebelum quiz dibuat, misalnya 70% pilihan ganda dan 30% isian singkat.",
+      "Saat ini sistem menghasilkan soal pilihan ganda dengan empat opsi, satu jawaban benar, dan pembahasan singkat. Jumlah soal dapat dipilih antara 5 hingga 15.",
   },
   {
     question: "Apakah data dan materi saya aman?",
     answer:
-      "Tentu aman. Seluruh file dan data belajarmu dienkripsi baik saat tersimpan maupun saat ditransfer. Kami tidak pernah membagikan, menjual, atau menggunakan materi pribadimu untuk kepentingan lain. Kamu juga bisa menghapus data kapan saja langsung dari pengaturan akun.",
+      "PDF dikirim untuk diproses oleh model AI dan tidak disimpan di database aplikasi. Data kuis diakses melalui endpoint server; kunci service-role dan kunci AI tidak dikirim ke browser.",
   },
   {
     question: "Apakah bisa digunakan untuk semua jenjang dan mata pelajaran?",

@@ -1,4 +1,5 @@
 import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -48,9 +49,14 @@ export function CtaSection() {
             </p>
 
             <div className="mt-9">
-              <Button className="h-13 rounded-xl bg-orange-600 px-9 py-3.5 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all hover:-translate-y-0.5 hover:bg-orange-500">
-                Mulai Gratis Sekarang
-                <ArrowRight className="size-5" aria-hidden="true" />
+              <Button
+                asChild
+                className="h-13 rounded-xl bg-orange-600 px-9 py-3.5 text-base font-semibold text-white shadow-2xl shadow-orange-500/40 transition-all hover:-translate-y-0.5 hover:bg-orange-500"
+              >
+                <Link href="/dashboard/create">
+                  Mulai Gratis Sekarang{" "}
+                  <ArrowRight className="size-5" aria-hidden="true" />
+                </Link>
               </Button>
               <p className="mt-5 text-xs font-medium text-neutral-500 sm:text-sm">
                 Gratis selamanya untuk paket dasar · Tanpa kartu kredit ·

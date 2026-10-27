@@ -1,8 +1,8 @@
 const stats = [
-  { value: "50K+", label: "Quiz Telah Dibuat" },
-  { value: "25K+", label: "Pelajar Aktif" },
-  { value: "500K+", label: "Soal Dihasilkan AI" },
-  { value: "4.9/5", label: "Rating Pengguna" },
+  { value: "6", label: "Karakter Kode Kuis" },
+  { value: "15", label: "Soal per Generasi" },
+  { value: "4", label: "Opsi per Soal" },
+  { value: "100%", label: "Penilaian Otomatis" },
 ];
 
 export function Stats() {

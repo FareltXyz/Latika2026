@@ -25,13 +25,13 @@ const features: Feature[] = [
     icon: FileUp,
     title: "Upload PDF Tanpa Ribet",
     description:
-      "Cukup drag & drop file PDF materi pelajaran, catatan kuliah, atau modul apapun. Mendukung dokumen hingga ratusan halaman sekaligus.",
+      "Cukup drag & drop file PDF materi pelajaran, catatan kuliah, atau modul hingga 8 MB. File tidak disimpan permanen setelah diproses.",
   },
   {
     icon: ListChecks,
     title: "Beragam Tipe Soal",
     description:
-      "Pilihan ganda, benar/salah, hingga isian singkat. Sesuaikan kombinasi tipe soal dengan gaya belajar dan target ujianmu.",
+      "Setiap soal memiliki empat opsi, satu jawaban benar, dan pembahasan ringkas yang dibuat dari isi materi.",
   },
   {
     icon: Gauge,
@@ -43,13 +43,13 @@ const features: Feature[] = [
     icon: LineChart,
     title: "Analisis Progres Belajar",
     description:
-      "Pantau perkembangan pemahamanmu dari waktu ke waktu lewat statistik visual yang mudah dipahami per materi maupun keseluruhan.",
+      "Pantau siapa yang sudah bergabung, siapa yang sudah menjawab, nilai peserta, dan rata-rata kelas dari dashboard.",
   },
   {
     icon: ShieldCheck,
     title: "Privasi Data Terjaga",
     description:
-      "Materi dan data belajarmu disimpan dengan enkripsi standar industri serta tidak akan pernah dibagikan kepada pihak ketiga.",
+      "Kunci database dan AI hanya berjalan di server. PDF diproses saat generasi dan tidak disimpan di database aplikasi.",
   },
 ];
 

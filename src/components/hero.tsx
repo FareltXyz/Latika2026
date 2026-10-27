@@ -5,18 +5,11 @@ import {
   ListChecks,
   PlayCircle,
   Sparkles,
-  Star,
 } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-
-const avatars = [
-  { initials: "RA", bg: "bg-orange-500" },
-  { initials: "DP", bg: "bg-neutral-800" },
-  { initials: "AS", bg: "bg-amber-500" },
-  { initials: "MN", bg: "bg-orange-700" },
-];
 
 const quizOptions = [
   { label: "Menyintesis protein sel", state: "default" },
@@ -97,62 +90,36 @@ export function Hero() {
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-              <Button className="h-13 w-full rounded-xl bg-orange-600 px-8 py-3.5 text-base font-semibold text-white shadow-xl shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-2xl hover:shadow-orange-500/35 sm:w-auto">
-                Buat Quiz Sekarang
-                <ArrowRight className="size-5" aria-hidden="true" />
+              <Button
+                asChild
+                className="h-13 w-full rounded-xl bg-orange-600 px-8 py-3.5 text-base font-semibold text-white shadow-xl shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-2xl hover:shadow-orange-500/35 sm:w-auto"
+              >
+                <Link href="/dashboard/create">
+                  Buat Quiz Sekarang{" "}
+                  <ArrowRight className="size-5" aria-hidden="true" />
+                </Link>
               </Button>
               <Button
+                asChild
                 variant="outline"
                 className="h-13 w-full rounded-xl border-neutral-300 bg-white/70 px-8 py-3.5 text-base font-semibold text-neutral-800 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 sm:w-auto"
               >
-                <PlayCircle className="size-5" aria-hidden="true" />
-                Lihat Demo
+                <Link href="/join">
+                  <PlayCircle className="size-5" aria-hidden="true" /> Gabung
+                  Kuis
+                </Link>
               </Button>
             </div>
 
-            {/* Social proof */}
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start sm:justify-center">
-              <div className="flex -space-x-2.5">
-                {avatars.map((avatar) => (
-                  <span
-                    key={avatar.initials}
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-xs font-bold text-white shadow-md ${avatar.bg}`}
-                    aria-hidden="true"
-                  >
-                    {avatar.initials}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-neutral-600 lg:justify-start">
+              {["Tanpa kartu kredit", "Login Google", "Skor otomatis"].map(
+                (item) => (
+                  <span key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className="size-4 text-orange-600" />
+                    {item}
                   </span>
-                ))}
-                <span
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-neutral-100 text-[10px] font-bold text-neutral-600 shadow-md"
-                  aria-hidden="true"
-                >
-                  10K+
-                </span>
-              </div>
-              <div className="text-center sm:text-left">
-                <div
-                  role="img"
-                  className="flex items-center justify-center gap-0.5 sm:justify-start"
-                  aria-label="Rating 5 dari 5 bintang"
-                >
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={`star-${star}`}
-                      className="h-4 w-4 fill-amber-400 text-amber-400"
-                      aria-hidden="true"
-                    />
-                  ))}
-                  <span className="ml-1.5 text-sm font-bold text-neutral-900">
-                    4.9/5
-                  </span>
-                </div>
-                <p className="mt-0.5 text-sm text-neutral-600">
-                  <span className="font-semibold text-neutral-900">
-                    10.000+ pelajar
-                  </span>{" "}
-                  sudah belajar lebih efektif
-                </p>
-              </div>
+                ),
+              )}
             </div>
           </div>
 

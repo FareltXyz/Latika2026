@@ -69,14 +69,19 @@ export function Navbar() {
         {/* Desktop actions */}
         <div className="hidden items-center gap-2.5 md:flex">
           <Button
+            asChild
             variant="ghost"
             className="h-10 px-5 text-sm font-semibold text-neutral-700 hover:text-orange-600"
           >
-            Masuk
+            <Link href="/auth">Masuk</Link>
           </Button>
-          <Button className="h-10 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-xl hover:shadow-orange-500/30">
-            Mulai Gratis
-            <ArrowRight className="size-4" aria-hidden="true" />
+          <Button
+            asChild
+            className="h-10 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-xl hover:shadow-orange-500/30"
+          >
+            <Link href="/dashboard">
+              Mulai Gratis <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
           </Button>
         </div>
 
@@ -116,14 +121,20 @@ export function Navbar() {
           ))}
           <div className="flex flex-col gap-2.5 pt-3">
             <Button
+              asChild
               variant="outline"
               className="h-11 rounded-xl border-neutral-300 text-sm font-semibold text-neutral-800 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
             >
-              Masuk
+              <Link href="/auth">Masuk</Link>
             </Button>
-            <Button className="h-11 rounded-xl bg-orange-600 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 hover:bg-orange-700">
-              Mulai Gratis
-              <ArrowRight className="size-4" aria-hidden="true" />
+            <Button
+              asChild
+              className="h-11 rounded-xl bg-orange-600 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 hover:bg-orange-700"
+            >
+              <Link href="/dashboard">
+                Mulai Gratis{" "}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
             </Button>
           </div>
         </div>
