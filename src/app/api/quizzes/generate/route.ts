@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { randomInt } from "node:crypto";
 
 import {
@@ -311,10 +312,25 @@ export async function POST(request: Request) {
         },
       ];
     } else {
-      const extracted = await mammoth.extractRawText({
-        arrayBuffer: fileBuffer,
-      });
-      const docxText = extracted.value.trim();
+      let docxText: string;
+      try {
+        const extracted = await mammoth.extractRawText({
+          buffer: Buffer.from(fileBuffer),
+        });
+        docxText = extracted.value.trim();
+      } catch (error) {
+        console.error("DOCX text extraction failed", {
+          filename: file.name,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        return Response.json(
+          {
+            error:
+              "File DOCX tidak dapat dibaca. Pastikan file tidak rusak, tidak terkunci, dan benar-benar berformat .docx.",
+          },
+          { status: 422 },
+        );
+      }
       if (docxText.length < 20) {
         return Response.json(
           {
