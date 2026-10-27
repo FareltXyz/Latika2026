@@ -16,10 +16,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteDescription =
+  "Ubah dokumen soal PDF atau Word menjadi kuis interaktif, bagikan kode ruang, dan pantau hasil peserta.";
+const productionDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    productionDomain ? `https://${productionDomain}` : "http://localhost:3000",
+  ),
   title: "Belajar Mandiri — Kuis AI dari PDF & Word",
-  description:
-    "Ubah dokumen soal PDF atau Word menjadi kuis interaktif, bagikan kode ruang, dan pantau hasil peserta.",
+  description: siteDescription,
+  openGraph: {
+    title: "Belajar Mandiri — Kuis AI dari PDF & Word",
+    description: siteDescription,
+    siteName: "Belajar Mandiri",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Belajar Mandiri — Kuis AI dari PDF & Word",
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

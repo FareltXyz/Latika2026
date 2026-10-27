@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight, GraduationCap, Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { Brand } from "@/components/app/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,19 +39,7 @@ export function Navbar() {
         aria-label="Navigasi utama"
         className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-[4.5rem] lg:px-8"
       >
-        {/* Logo */}
-        <Link
-          href="#beranda"
-          className="group flex items-center gap-2.5"
-          aria-label="Belajar Mandiri — kembali ke beranda"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
-            <GraduationCap className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <span className="text-lg font-extrabold tracking-tight text-neutral-950">
-            Belajar<span className="text-orange-600">Mandiri</span>
-          </span>
-        </Link>
+        <Brand href="#beranda" />
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-8 md:flex">

@@ -9,9 +9,12 @@ import {
   Expand,
   LoaderCircle,
   LockKeyhole,
+  Music2,
   Radio,
   ShieldAlert,
   Trophy,
+  Volume2,
+  VolumeX,
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -40,6 +43,8 @@ type RoomData = {
 
 type WakeLockHandle = { release: () => Promise<void> };
 
+const BACKGROUND_MUSIC_SRC = "/quiz-backsound.mp3";
+
 function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -58,7 +63,10 @@ export function QuizPlayer({ code }: { code: string }) {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [violationMessage, setViolationMessage] = useState("");
   const [error, setError] = useState("");
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicNeedsInteraction, setMusicNeedsInteraction] = useState(false);
   const audioRef = useRef<AudioContext | null>(null);
+  const backgroundMusicRef = useRef<HTMLAudioElement | null>(null);
   const wakeLockRef = useRef<WakeLockHandle | null>(null);
   const lastViolationRef = useRef(0);
   const armedAtRef = useRef(Number.POSITIVE_INFINITY);
@@ -96,10 +104,61 @@ export function QuizPlayer({ code }: { code: string }) {
     return () => window.clearInterval(timer);
   }, [load, result]);
 
+  useEffect(() => {
+    const music = new Audio(BACKGROUND_MUSIC_SRC);
+    music.loop = true;
+    music.preload = "auto";
+    music.volume = 0.22;
+    const onPlay = () => {
+      setMusicPlaying(true);
+      setMusicNeedsInteraction(false);
+    };
+    const onPause = () => setMusicPlaying(false);
+    music.addEventListener("play", onPlay);
+    music.addEventListener("pause", onPause);
+    backgroundMusicRef.current = music;
+
+    return () => {
+      music.removeEventListener("play", onPlay);
+      music.removeEventListener("pause", onPause);
+      music.pause();
+      backgroundMusicRef.current = null;
+    };
+  }, []);
+
+  const playBackgroundMusic = useCallback(async () => {
+    const music = backgroundMusicRef.current;
+    if (!music) return;
+    try {
+      await music.play();
+      setMusicNeedsInteraction(false);
+    } catch {
+      setMusicPlaying(false);
+      setMusicNeedsInteraction(true);
+    }
+  }, []);
+
+  const stopBackgroundMusic = useCallback((reset = false) => {
+    const music = backgroundMusicRef.current;
+    if (!music) return;
+    music.pause();
+    if (reset) music.currentTime = 0;
+    setMusicNeedsInteraction(false);
+  }, []);
+
+  const toggleBackgroundMusic = useCallback(() => {
+    if (backgroundMusicRef.current?.paused) {
+      void playBackgroundMusic();
+    } else {
+      stopBackgroundMusic();
+    }
+  }, [playBackgroundMusic, stopBackgroundMusic]);
+
   const releaseExamMode = useCallback(async () => {
     armedAtRef.current = Number.POSITIVE_INFINITY;
     setExamStarted(false);
     setViolationMessage("");
+    stopBackgroundMusic(true);
     if (document.fullscreenElement) {
       await document.exitFullscreen().catch(() => undefined);
     }
@@ -107,7 +166,7 @@ export function QuizPlayer({ code }: { code: string }) {
       await wakeLockRef.current.release().catch(() => undefined);
       wakeLockRef.current = null;
     }
-  }, []);
+  }, [stopBackgroundMusic]);
 
   useEffect(() => {
     if (result || room?.quiz.status === "finished") void releaseExamMode();
@@ -167,7 +226,8 @@ export function QuizPlayer({ code }: { code: string }) {
     if (!audioRef.current && AudioContextConstructor) {
       audioRef.current = new AudioContextConstructor();
     }
-    await audioRef.current?.resume().catch(() => undefined);
+    void audioRef.current?.resume().catch(() => undefined);
+    void playBackgroundMusic();
     await requestFullscreen();
 
     if ("wakeLock" in navigator) {
@@ -185,6 +245,7 @@ export function QuizPlayer({ code }: { code: string }) {
 
   async function resumeExam() {
     armedAtRef.current = Date.now() + 1500;
+    if (!musicPlaying) void playBackgroundMusic();
     await requestFullscreen();
     setViolationMessage("");
   }
@@ -457,6 +518,10 @@ export function QuizPlayer({ code }: { code: string }) {
               <AlarmClock className="mt-0.5 size-4 shrink-0 text-orange-400" />
               Pelanggaran memicu bunyi peringatan selama perangkat tidak dimute.
             </li>
+            <li className="flex gap-3">
+              <Music2 className="mt-0.5 size-4 shrink-0 text-orange-400" />
+              Musik latar diputar otomatis dan berulang selama kuis dikerjakan.
+            </li>
           </ul>
           <div className="mt-6 rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-xs leading-relaxed text-amber-200">
             Browser tidak dapat memblokir tombol Power/Home/Recent Apps, tombol
@@ -510,6 +575,28 @@ export function QuizPlayer({ code }: { code: string }) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleBackgroundMusic}
+              aria-pressed={musicPlaying}
+              aria-label={
+                musicPlaying ? "Matikan musik latar" : "Nyalakan musik latar"
+              }
+              title={
+                musicPlaying ? "Matikan musik latar" : "Nyalakan musik latar"
+              }
+              className={`flex size-9 items-center justify-center rounded-full border shadow-sm transition ${
+                musicPlaying
+                  ? "border-orange-200 bg-orange-50 text-orange-700"
+                  : "border-neutral-200 bg-white text-neutral-500 hover:text-orange-600"
+              }`}
+            >
+              {musicPlaying ? (
+                <Volume2 className="size-4" />
+              ) : (
+                <VolumeX className="size-4" />
+              )}
+            </button>
             <span
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-sm font-black ${remainingSeconds <= 60 ? "bg-red-100 text-red-700" : "bg-white text-neutral-700"}`}
             >
@@ -520,6 +607,16 @@ export function QuizPlayer({ code }: { code: string }) {
             </span>
           </div>
         </header>
+        {musicNeedsInteraction && (
+          <button
+            type="button"
+            onClick={() => void playBackgroundMusic()}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-800 transition hover:bg-amber-100"
+          >
+            <Volume2 className="size-4" /> Browser memblokir autoplay — ketuk
+            untuk menyalakan musik
+          </button>
+        )}
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-orange-100">
           <div
             className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all"
