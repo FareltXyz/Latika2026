@@ -231,36 +231,73 @@ export async function POST(request: Request) {
       !configuredGoogleModel || configuredGoogleModel === "gemini-2.5-flash"
         ? "gemini-3.8-flash"
         : configuredGoogleModel;
-    const model = googleApiKey
-      ? createGoogleGenerativeAI({ apiKey: googleApiKey })(googleModel)
-      : (process.env.AI_MODEL ?? "google/gemini-3.8-flash");
-    const { output } = await generateText({
-      model,
-      output: Output.object({
-        name: "QuizDariPDF",
-        description: "Kuis pilihan ganda berbahasa Indonesia berdasarkan PDF",
-        schema: generatedQuizSchema,
-      }),
-      system:
-        "Anda adalah guru Indonesia yang teliti. Jika PDF memuat soal beserta jawaban atau kunci jawaban, pertahankan jawaban yang tercantum di PDF sebagai jawaban benar. Jika PDF memuat soal tanpa jawaban, kerjakan sendiri soal tersebut dengan penalaran yang benar sebelum membuat empat opsi. Jika PDF hanya berisi materi, buat soal dari konsep penting lalu tentukan sendiri jawaban yang benar. Setiap soal harus punya tepat satu jawaban benar, opsi pengecoh yang masuk akal, dan penjelasan yang menerangkan alasan jawabannya. Jangan mengubah kunci jawaban eksplisit dari PDF. Gunakan bahasa Indonesia yang jelas.",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Buat tepat ${questionCount} soal pilihan ganda dengan tingkat kesulitan ${difficulty}. Prioritaskan soal dan kunci jawaban yang sudah ada di PDF. Untuk soal tanpa kunci, selesaikan dengan benar terlebih dahulu. Jika jumlah soal di PDF kurang, tambahkan soal baru dari materi. Variasikan cakupan konsep penting dan hindari pertanyaan duplikat.`,
-            },
-            {
-              type: "file",
-              mediaType: "application/pdf",
-              data: pdf,
-              filename: file.name,
-            },
-          ],
-        },
-      ],
-    });
+    const runGeneration = (
+      selectedModel: Parameters<typeof generateText>[0]["model"],
+      maxRetries: number,
+    ) =>
+      generateText({
+        model: selectedModel,
+        maxRetries,
+        output: Output.object({
+          name: "QuizDariPDF",
+          description: "Kuis pilihan ganda berbahasa Indonesia berdasarkan PDF",
+          schema: generatedQuizSchema,
+        }),
+        system:
+          "Anda adalah guru Indonesia yang teliti. Jika PDF memuat soal beserta jawaban atau kunci jawaban, pertahankan jawaban yang tercantum di PDF sebagai jawaban benar. Jika PDF memuat soal tanpa jawaban, kerjakan sendiri soal tersebut dengan penalaran yang benar sebelum membuat empat opsi. Jika PDF hanya berisi materi, buat soal dari konsep penting lalu tentukan sendiri jawaban yang benar. Setiap soal harus punya tepat satu jawaban benar, opsi pengecoh yang masuk akal, dan penjelasan yang menerangkan alasan jawabannya. Jangan mengubah kunci jawaban eksplisit dari PDF. Gunakan bahasa Indonesia yang jelas.",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Buat tepat ${questionCount} soal pilihan ganda dengan tingkat kesulitan ${difficulty}. Prioritaskan soal dan kunci jawaban yang sudah ada di PDF. Untuk soal tanpa kunci, selesaikan dengan benar terlebih dahulu. Jika jumlah soal di PDF kurang, tambahkan soal baru dari materi. Variasikan cakupan konsep penting dan hindari pertanyaan duplikat.`,
+              },
+              {
+                type: "file",
+                mediaType: "application/pdf",
+                data: pdf,
+                filename: file.name,
+              },
+            ],
+          },
+        ],
+      });
+
+    let output: z.infer<typeof generatedQuizSchema> | undefined;
+    if (googleApiKey) {
+      const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
+      const fallbackModels = Array.from(
+        new Set([googleModel, "gemini-3.7-flash", "gemini-3.6-flash"]),
+      );
+      let lastError: unknown;
+
+      for (const modelId of fallbackModels) {
+        try {
+          output = (await runGeneration(google(modelId), 0)).output;
+          break;
+        } catch (error) {
+          lastError = error;
+          const canFallback =
+            APICallError.isInstance(error) &&
+            (error.statusCode === 429 || error.statusCode === 503);
+          if (!canFallback) throw error;
+          console.warn("Google model capacity fallback", {
+            modelId,
+            statusCode: error.statusCode,
+          });
+        }
+      }
+
+      if (!output) throw lastError ?? new Error("Semua model AI gagal.");
+    } else {
+      output = (
+        await runGeneration(
+          process.env.AI_MODEL ?? "google/gemini-3.8-flash",
+          2,
+        )
+      ).output;
+    }
 
     let joinCode = createJoinCode();
 
