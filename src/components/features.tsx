@@ -19,19 +19,19 @@ const features: Feature[] = [
     icon: Sparkles,
     title: "Generator Quiz AI",
     description:
-      "AI menganalisis seluruh isi PDF-mu, mengenali konsep-konsep penting, lalu menyusun pertanyaan yang relevan dan menantang dalam hitungan detik.",
+      "AI membaca soal pada dokumen, mengikuti kunci jawaban yang tersedia, atau menyelesaikan soal yang belum memiliki jawaban.",
   },
   {
     icon: FileUp,
-    title: "Upload PDF Tanpa Ribet",
+    title: "Upload PDF & Word",
     description:
-      "Cukup drag & drop file PDF materi pelajaran, catatan kuliah, atau modul hingga 4 MB. File tidak disimpan permanen setelah diproses.",
+      "Cukup drag & drop dokumen soal PDF atau Word (.docx) hingga 4 MB. File tidak disimpan permanen setelah diproses.",
   },
   {
     icon: ListChecks,
     title: "Beragam Tipe Soal",
     description:
-      "Setiap soal memiliki empat opsi, satu jawaban benar, dan pembahasan ringkas yang dibuat dari isi materi.",
+      "Setiap soal memiliki empat opsi, satu jawaban benar, dan pembahasan ringkas berdasarkan dokumen soal.",
   },
   {
     icon: Gauge,
@@ -49,7 +49,7 @@ const features: Feature[] = [
     icon: ShieldCheck,
     title: "Privasi Data Terjaga",
     description:
-      "Kunci database dan AI hanya berjalan di server. PDF diproses saat generasi dan tidak disimpan di database aplikasi.",
+      "Kunci database dan AI hanya berjalan di server. Dokumen diproses saat generasi dan tidak disimpan di database aplikasi.",
   },
 ];
 
@@ -68,7 +68,7 @@ export function Features() {
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-neutral-600">
             Dirancang untuk membantu kamu belajar lebih cepat dan terukur — dari
-            proses upload materi sampai analisis hasil belajar.
+            proses upload soal sampai analisis hasil belajar.
           </p>
         </div>
 

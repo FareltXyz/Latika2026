@@ -11,7 +11,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-const MAX_PDF_SIZE = 4 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
 
 type GenerateQuizResponse = {
   error?: string;
@@ -32,7 +32,7 @@ async function readGenerateResponse(response: Response) {
   if (response.status === 413) {
     return {
       error:
-        "Ukuran PDF terlalu besar untuk dikirim. Gunakan PDF maksimal 4 MB atau kompres PDF terlebih dahulu.",
+        "Ukuran dokumen terlalu besar. Gunakan PDF/DOCX maksimal 4 MB atau kompres file terlebih dahulu.",
     };
   }
 
@@ -56,6 +56,7 @@ export function QuizBuilder() {
   const [questionCount, setQuestionCount] = useState("8");
   const [difficulty, setDifficulty] = useState("sedang");
   const [durationMinutes, setDurationMinutes] = useState("20");
+  const [retentionDays, setRetentionDays] = useState("3");
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -63,15 +64,17 @@ export function QuizBuilder() {
   function acceptFile(selected?: File) {
     setError("");
     if (!selected) return;
-    if (
-      selected.type !== "application/pdf" ||
-      !selected.name.toLowerCase().endsWith(".pdf")
-    ) {
-      setError("Pilih file dengan format PDF.");
+    const extension = selected.name.toLowerCase().split(".").pop();
+    if (extension !== "pdf" && extension !== "docx") {
+      setError(
+        extension === "doc"
+          ? "Format .doc lama belum didukung. Simpan ulang file sebagai .docx."
+          : "Pilih dokumen soal berformat PDF atau Word (.docx).",
+      );
       return;
     }
-    if (selected.size > MAX_PDF_SIZE) {
-      setError("Ukuran PDF maksimal 4 MB agar dapat diproses di Vercel.");
+    if (selected.size > MAX_FILE_SIZE) {
+      setError("Ukuran dokumen maksimal 4 MB agar dapat diproses di Vercel.");
       return;
     }
     setFile(selected);
@@ -90,7 +93,7 @@ export function QuizBuilder() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!file) {
-      setError("Pilih PDF terlebih dahulu.");
+      setError("Pilih dokumen soal terlebih dahulu.");
       return;
     }
 
@@ -101,6 +104,7 @@ export function QuizBuilder() {
     formData.set("questionCount", questionCount);
     formData.set("difficulty", difficulty);
     formData.set("durationMinutes", durationMinutes);
+    formData.set("retentionDays", retentionDays);
 
     try {
       const response = await fetch("/api/quizzes/generate", {
@@ -130,20 +134,22 @@ export function QuizBuilder() {
             <UploadCloud className="size-5" />
           </span>
           <div>
-            <h2 className="font-bold text-neutral-950">Unggah materi</h2>
-            <p className="text-sm text-neutral-500">PDF maksimal 4 MB</p>
+            <h2 className="font-bold text-neutral-950">Unggah dokumen soal</h2>
+            <p className="text-sm text-neutral-500">
+              PDF atau Word (.docx) · maksimal 4 MB
+            </p>
           </div>
         </div>
 
         <input
-          id="quiz-pdf"
+          id="quiz-document"
           type="file"
-          accept="application/pdf,.pdf"
+          accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
           onChange={onChange}
           className="sr-only"
         />
         <label
-          htmlFor="quiz-pdf"
+          htmlFor="quiz-document"
           onDragOver={(event) => {
             event.preventDefault();
             setDragging(true);
@@ -168,7 +174,7 @@ export function QuizBuilder() {
                 {(file.size / 1024 / 1024).toFixed(2)} MB
               </p>
               <span className="mt-4 text-sm font-semibold text-orange-600">
-                Klik atau jatuhkan PDF untuk mengganti
+                Klik atau jatuhkan dokumen untuk mengganti
               </span>
             </>
           ) : (
@@ -177,13 +183,13 @@ export function QuizBuilder() {
                 <UploadCloud className="size-8" />
               </span>
               <p className="mt-4 font-bold text-neutral-900">
-                Tarik PDF ke sini
+                Tarik PDF atau DOCX ke sini
               </p>
               <p className="mt-1 text-sm text-neutral-500">
                 atau pilih dari perangkat Anda
               </p>
               <span className="mt-5 inline-flex h-9 items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold shadow-xs">
-                Pilih PDF
+                Pilih dokumen
               </span>
             </>
           )}
@@ -238,6 +244,33 @@ export function QuizBuilder() {
             ))}
           </select>
         </label>
+
+        <fieldset className="mt-5">
+          <legend className="text-sm font-semibold text-neutral-700">
+            Masa simpan kuis
+          </legend>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {[3, 5].map((days) => (
+              <button
+                key={days}
+                type="button"
+                onClick={() => setRetentionDays(String(days))}
+                aria-pressed={retentionDays === String(days)}
+                className={`h-12 rounded-xl border text-sm font-bold transition ${
+                  retentionDays === String(days)
+                    ? "border-orange-600 bg-orange-50 text-orange-700 ring-2 ring-orange-100"
+                    : "border-neutral-300 bg-white text-neutral-600 hover:border-orange-300"
+                }`}
+              >
+                {days} hari
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-neutral-500">
+            Kuis dan seluruh hasilnya dihapus otomatis setelah masa simpan
+            berakhir, meskipun tidak sedang aktif.
+          </p>
+        </fieldset>
 
         <div className="mt-6 rounded-2xl bg-orange-50 p-4 text-sm leading-relaxed text-orange-900">
           Timer dimulai saat host menekan Mulai kuis. Jawaban akan dikirim

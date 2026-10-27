@@ -7,14 +7,14 @@ import {
 
 const faqs = [
   {
-    question: "Bagaimana cara kerja AI dalam membuat quiz dari PDF?",
+    question: "Bagaimana cara kerja AI dalam membuat quiz?",
     answer:
-      "Setelah kamu mengunggah file PDF, sistem AI kami akan membaca dan menganalisis seluruh isi dokumen. AI mengenali konsep-konsep kunci, definisi, serta hubungan antar materi, lalu menyusunnya menjadi pertanyaan-pertanyaan yang jelas dan relevan lengkap dengan pilihan jawaban. Seluruh prosesnya hanya membutuhkan waktu beberapa detik.",
+      "Unggah dokumen PDF atau Word (.docx) yang berisi soal. AI mempertahankan kunci jawaban yang tertulis; jika suatu soal belum memiliki jawaban, AI menyelesaikannya sebelum membuat empat pilihan dan pembahasan.",
   },
   {
-    question: "Apakah ada batas jumlah halaman untuk file PDF?",
+    question: "Apakah ada batas ukuran dokumen?",
     answer:
-      "Sistem membatasi ukuran file hingga 4 MB agar sesuai dengan batas unggahan Vercel. Jika PDF lebih besar, kompres atau pecah dokumen menjadi beberapa bagian sebelum diunggah.",
+      "Sistem menerima PDF dan Word (.docx) maksimal 4 MB. Jika file lebih besar, kompres atau pecah dokumen menjadi beberapa bagian sebelum diunggah. Format .doc lama perlu disimpan ulang sebagai .docx.",
   },
   {
     question: "Tipe soal apa saja yang bisa dihasilkan?",
@@ -22,14 +22,14 @@ const faqs = [
       "Saat ini sistem menghasilkan soal pilihan ganda dengan empat opsi, satu jawaban benar, dan pembahasan singkat. Jumlah soal dapat dipilih antara 5 hingga 15.",
   },
   {
-    question: "Apakah data dan materi saya aman?",
+    question: "Apakah dokumen saya aman?",
     answer:
-      "PDF dikirim untuk diproses oleh model AI dan tidak disimpan di database aplikasi. Data kuis diakses melalui endpoint server; kunci service-role dan kunci AI tidak dikirim ke browser.",
+      "Dokumen dikirim untuk diproses oleh model AI dan tidak disimpan di database aplikasi. Data kuis diakses melalui endpoint server; kunci service-role dan kunci AI tidak dikirim ke browser.",
   },
   {
     question: "Apakah bisa digunakan untuk semua jenjang dan mata pelajaran?",
     answer:
-      "Bisa! Belajar Mandiri cocok untuk pelajar SMP, SMA, mahasiswa, hingga profesional yang sedang mempersiapkan sertifikasi. AI kami mampu memproses materi dari berbagai bidang — matematika, sains, sejarah, bahasa, ekonomi, dan banyak lagi.",
+      "Bisa! Belajar Mandiri dapat memproses dokumen soal dari berbagai bidang — matematika, sains, sejarah, bahasa, ekonomi, dan banyak lagi. Mode khusus dokumen materi akan hadir pada pembaruan berikutnya.",
   },
 ];
 

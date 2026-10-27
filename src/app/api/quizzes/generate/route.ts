@@ -5,6 +5,7 @@ import {
   type GoogleLanguageModelOptions,
 } from "@ai-sdk/google";
 import { APICallError, generateText, NoObjectGeneratedError, Output } from "ai";
+import mammoth from "mammoth";
 import { z } from "zod";
 
 import { getCurrentUserId } from "@/lib/auth";
@@ -14,7 +15,8 @@ export const runtime = "nodejs";
 export const maxDuration = 180;
 
 // Keep the complete multipart request below Vercel Functions' 4.5 MB limit.
-const MAX_PDF_SIZE = 4 * 1024 * 1024;
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
+const MAX_DOCX_TEXT_LENGTH = 250_000;
 const DAILY_GENERATION_LIMIT = 10;
 const MODEL_TIMEOUT_MS = 45_000;
 const DEFAULT_GOOGLE_MODEL = "gemini-3.5-flash-lite";
@@ -32,7 +34,7 @@ const generatedQuizSchema = z.object({
     .string()
     .min(10)
     .max(240)
-    .describe("Ringkasan singkat topik materi"),
+    .describe("Ringkasan singkat topik pada dokumen soal"),
   questions: z
     .array(
       z.object({
@@ -113,8 +115,8 @@ function generationErrorResponse(error: unknown) {
         error:
           (status ? messages[status] : undefined) ??
           (usesGoogleDirect
-            ? "Google Gemini gagal membaca PDF. Periksa konfigurasi dan quota API key."
-            : "Layanan AI gagal membaca PDF. Periksa AI Gateway Logs di Vercel."),
+            ? "Google Gemini gagal membaca dokumen. Periksa konfigurasi dan quota API key."
+            : "Layanan AI gagal membaca dokumen. Periksa AI Gateway Logs di Vercel."),
       },
       { status: status && status >= 400 && status < 600 ? status : 502 },
     );
@@ -128,7 +130,7 @@ function generationErrorResponse(error: unknown) {
     return Response.json(
       {
         error:
-          "AI belum berhasil menyusun soal dari PDF ini. Coba PDF berbasis teks atau kurangi jumlah soal.",
+          "AI belum berhasil menyusun soal dari dokumen ini. Coba dokumen soal yang lebih ringkas atau kurangi jumlah soal.",
       },
       { status: 422 },
     );
@@ -139,7 +141,7 @@ function generationErrorResponse(error: unknown) {
     return Response.json(
       {
         error:
-          "AI belum selesai memproses PDF dalam batas waktu. Coba lagi atau gunakan PDF yang lebih ringkas.",
+          "AI belum selesai memproses dokumen dalam batas waktu. Coba lagi atau gunakan dokumen yang lebih ringkas.",
       },
       { status: 504 },
     );
@@ -150,6 +152,20 @@ function generationErrorResponse(error: unknown) {
     message?: string;
     details?: string;
   };
+  if (
+    databaseError.code === "PGRST204" &&
+    (databaseError.message?.includes("retention_days") ||
+      databaseError.message?.includes("expires_at"))
+  ) {
+    console.error("Quiz retention migration missing", databaseError.code);
+    return Response.json(
+      {
+        error:
+          "Database belum mendukung masa simpan. Jalankan migration supabase/migrations/003_quiz_retention.sql di Supabase SQL Editor.",
+      },
+      { status: 503 },
+    );
+  }
   if (
     databaseError.code === "PGRST204" ||
     databaseError.message?.includes("duration_minutes") ||
@@ -205,32 +221,39 @@ export async function POST(request: Request) {
     const file = formData.get("file");
     const requestedCount = Number(formData.get("questionCount") ?? 8);
     const requestedDuration = Number(formData.get("durationMinutes") ?? 20);
+    const requestedRetention = Number(formData.get("retentionDays") ?? 3);
     const difficulty = String(formData.get("difficulty") ?? "sedang");
     const questionCount = Math.min(15, Math.max(3, requestedCount));
     const durationMinutes = Math.min(180, Math.max(5, requestedDuration));
+    const retentionDays = requestedRetention === 5 ? 5 : 3;
 
     if (!(file instanceof File)) {
       return Response.json(
-        { error: "File PDF wajib dipilih." },
+        { error: "Dokumen soal PDF atau DOCX wajib dipilih." },
         { status: 400 },
       );
     }
 
-    if (
-      file.type !== "application/pdf" ||
-      !file.name.toLowerCase().endsWith(".pdf")
-    ) {
+    const lowerFileName = file.name.toLowerCase();
+    const isPdf = lowerFileName.endsWith(".pdf");
+    const isDocx = lowerFileName.endsWith(".docx");
+
+    if (!isPdf && !isDocx) {
       return Response.json(
-        { error: "Format file harus PDF." },
+        {
+          error: lowerFileName.endsWith(".doc")
+            ? "Format .doc lama belum didukung. Simpan ulang file sebagai .docx."
+            : "Format dokumen harus PDF atau Word (.docx).",
+        },
         { status: 400 },
       );
     }
 
-    if (file.size > MAX_PDF_SIZE) {
+    if (file.size > MAX_FILE_SIZE) {
       return Response.json(
         {
           error:
-            "Ukuran PDF maksimal 4 MB agar dapat diproses di Vercel. Kompres PDF lalu coba lagi.",
+            "Ukuran dokumen maksimal 4 MB agar dapat diproses di Vercel. Kompres file lalu coba lagi.",
         },
         { status: 413 },
       );
@@ -249,7 +272,7 @@ export async function POST(request: Request) {
 
     const { error: migrationError } = await admin
       .from("quizzes")
-      .select("duration_minutes")
+      .select("duration_minutes, retention_days, expires_at")
       .limit(1);
     if (migrationError) throw migrationError;
 
@@ -260,7 +283,59 @@ export async function POST(request: Request) {
       );
     }
 
-    const pdf = new Uint8Array(await file.arrayBuffer());
+    const fileBuffer = await file.arrayBuffer();
+    let documentContent:
+      | Array<
+          | { type: "text"; text: string }
+          | {
+              type: "file";
+              mediaType: "application/pdf";
+              data: Uint8Array;
+              filename: string;
+            }
+        >
+      | undefined;
+
+    if (isPdf) {
+      documentContent = [
+        {
+          type: "file",
+          mediaType: "application/pdf",
+          data: new Uint8Array(fileBuffer),
+          filename: file.name,
+        },
+      ];
+    } else {
+      const extracted = await mammoth.extractRawText({
+        arrayBuffer: fileBuffer,
+      });
+      const docxText = extracted.value.trim();
+      if (docxText.length < 20) {
+        return Response.json(
+          {
+            error:
+              "Teks pada DOCX tidak terbaca. Pastikan file berisi soal dalam bentuk teks, bukan hanya gambar.",
+          },
+          { status: 422 },
+        );
+      }
+      if (docxText.length > MAX_DOCX_TEXT_LENGTH) {
+        return Response.json(
+          {
+            error:
+              "Isi DOCX terlalu panjang. Pecah dokumen menjadi beberapa file yang lebih kecil.",
+          },
+          { status: 413 },
+        );
+      }
+      documentContent = [
+        {
+          type: "text",
+          text: `Isi dokumen Word “${file.name}”:\n\n${docxText}`,
+        },
+      ];
+    }
+
     const configuredGoogleModel = process.env.GOOGLE_AI_MODEL?.trim();
     const googleModel =
       !configuredGoogleModel ||
@@ -278,12 +353,13 @@ export async function POST(request: Request) {
         maxOutputTokens: 8_192,
         timeout: { totalMs: timeoutMs },
         output: Output.object({
-          name: "QuizDariPDF",
-          description: "Kuis pilihan ganda berbahasa Indonesia berdasarkan PDF",
+          name: "KuisDariDokumen",
+          description:
+            "Kuis pilihan ganda berbahasa Indonesia berdasarkan dokumen soal",
           schema: generatedQuizSchema,
         }),
         system:
-          "Anda adalah guru Indonesia yang teliti. Jika PDF memuat soal beserta jawaban atau kunci jawaban, pertahankan jawaban yang tercantum di PDF sebagai jawaban benar. Jika PDF memuat soal tanpa jawaban, kerjakan sendiri soal tersebut dengan penalaran yang benar sebelum membuat empat opsi. Jika PDF hanya berisi materi, buat soal dari konsep penting lalu tentukan sendiri jawaban yang benar. Setiap soal harus punya tepat satu jawaban benar, opsi pengecoh yang masuk akal, dan penjelasan yang menerangkan alasan jawabannya. Jangan mengubah kunci jawaban eksplisit dari PDF. Gunakan bahasa Indonesia yang jelas.",
+          "Anda adalah guru Indonesia yang teliti. Dokumen input adalah dokumen soal. Jika dokumen memuat jawaban atau kunci jawaban, pertahankan jawaban yang tercantum sebagai jawaban benar. Jika soal tidak memiliki jawaban, kerjakan sendiri dengan penalaran yang benar sebelum membuat empat opsi. Setiap soal harus punya tepat satu jawaban benar, opsi pengecoh yang masuk akal, dan penjelasan yang menerangkan alasan jawabannya. Jangan mengubah kunci jawaban eksplisit dari dokumen. Gunakan bahasa Indonesia yang jelas.",
         providerOptions: {
           google: {
             thinkingConfig: { thinkingLevel: "low" },
@@ -295,14 +371,9 @@ export async function POST(request: Request) {
             content: [
               {
                 type: "text",
-                text: `Buat tepat ${questionCount} soal pilihan ganda dengan tingkat kesulitan ${difficulty}. Prioritaskan soal dan kunci jawaban yang sudah ada di PDF. Untuk soal tanpa kunci, selesaikan dengan benar terlebih dahulu. Jika jumlah soal di PDF kurang, tambahkan soal baru dari materi. Variasikan cakupan konsep penting dan hindari pertanyaan duplikat.`,
+                text: `Susun tepat ${questionCount} soal pilihan ganda dengan tingkat kesulitan ${difficulty} dari soal yang terdapat pada dokumen. Prioritaskan soal dan kunci jawaban eksplisit. Untuk soal tanpa kunci, selesaikan dengan benar terlebih dahulu. Jika jumlah soal pada dokumen melebihi kebutuhan, pilih soal yang paling bervariasi dan hindari duplikat.`,
               },
-              {
-                type: "file",
-                mediaType: "application/pdf",
-                data: pdf,
-                filename: file.name,
-              },
+              ...documentContent,
             ],
           },
         ],
@@ -370,6 +441,10 @@ export async function POST(request: Request) {
         join_code: joinCode,
         status: "waiting",
         duration_minutes: durationMinutes,
+        retention_days: retentionDays,
+        expires_at: new Date(
+          Date.now() + retentionDays * 24 * 60 * 60 * 1000,
+        ).toISOString(),
       })
       .select("id, join_code")
       .single();

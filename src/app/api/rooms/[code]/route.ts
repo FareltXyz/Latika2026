@@ -19,9 +19,10 @@ export async function GET(
   const { data: quiz } = await admin
     .from("quizzes")
     .select(
-      "id, title, description, status, duration_minutes, started_at, ends_at",
+      "id, title, description, status, duration_minutes, started_at, ends_at, expires_at",
     )
     .eq("join_code", code)
+    .gt("expires_at", new Date().toISOString())
     .maybeSingle();
 
   if (!quiz)

@@ -75,9 +75,9 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-400">
-              Platform belajar mandiri yang mengubah materi PDF-mu menjadi quiz
-              interaktif dengan bantuan AI. Belajar jadi lebih cepat, seru, dan
-              terukur — kapan pun dan di mana pun.
+              Platform yang mengubah dokumen soal PDF atau Word menjadi quiz
+              interaktif dengan bantuan AI. Pembuatan dan penilaian kuis jadi
+              lebih cepat dan terukur.
             </p>
             <div className="mt-6 flex items-center gap-3">
               {socials.map((social) => (

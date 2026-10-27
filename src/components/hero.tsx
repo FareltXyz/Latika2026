@@ -61,7 +61,7 @@ export function Hero() {
             </div>
 
             <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-neutral-950 sm:text-5xl xl:text-[3.75rem]">
-              Ubah Materi PDF Jadi{" "}
+              Ubah Dokumen Soal Jadi{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 bg-clip-text text-transparent">
                   Quiz Interaktif
@@ -84,9 +84,8 @@ export function Hero() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-neutral-600 sm:text-xl lg:mx-0">
-              Upload materi belajarmu dalam bentuk PDF, biarkan AI menyusun
-              soal-soal berkualitas, dan uji pemahamanmu lewat quiz yang seru.
-              Belajar mandiri tidak pernah semudah ini.
+              Upload soal dalam bentuk PDF atau Word, biarkan AI menyiapkan
+              pilihan jawaban dan pembahasan, lalu bagikan kuis dengan kode.
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
@@ -192,7 +191,7 @@ export function Hero() {
               </div>
             </div>
 
-            {/* Floating card: PDF uploaded */}
+            {/* Floating card: document uploaded */}
             <div className="absolute -top-9 -left-3 animate-float sm:-left-8">
               <div className="flex items-center gap-3 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-xl shadow-neutral-900/10">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-500">
@@ -200,7 +199,7 @@ export function Hero() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-neutral-900">
-                    materi-biologi.pdf
+                    latihan-biologi.docx
                   </p>
                   <p className="flex items-center gap-1 text-xs font-medium text-emerald-600">
                     <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
