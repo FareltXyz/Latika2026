@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, PlusCircle } from "lucide-react";
+import { Brain, LayoutDashboard, LogOut, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -36,6 +36,13 @@ export default async function DashboardLayout({
             >
               <LayoutDashboard className="size-4" />{" "}
               <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+            <Link
+              href="/dashboard/flash-memory"
+              className="flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+            >
+              <Brain className="size-4" />{" "}
+              <span className="hidden sm:inline">Flash Memory</span>
             </Link>
             <Link
               href="/dashboard/create"

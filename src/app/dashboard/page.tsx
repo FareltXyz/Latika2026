@@ -90,7 +90,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/dashboard/create"
+            href="/dashboard/flash-memory"
             className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 font-bold text-blue-950 shadow-lg shadow-black/10 transition hover:bg-blue-50 hover:shadow-xl active:scale-[0.98]"
           >
             Mulai Latihan{" "}
