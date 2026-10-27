@@ -69,6 +69,13 @@ AI_MODEL=google/gemini-3.8-flash
 
 Import repository ke Vercel, tambahkan environment variables di atas, lalu deploy. Vercel otomatis mendeteksi Next.js. Static export/GitHub Pages sengaja tidak dipakai karena aplikasi membutuhkan Route Handlers untuk auth, database, dan AI.
 
+## Jika generate kuis gagal
+
+- Pastikan migration `001_initial.sql` dan `002_exam_mode.sql` sudah dijalankan di Supabase SQL Editor.
+- Buka **Vercel → AI Gateway → Logs** untuk melihat status request. Error `401` berarti autentikasi Gateway bermasalah, `402` berarti kredit/budget tidak cukup, `403` biasanya memerlukan verifikasi akun atau metode pembayaran, dan `429` berarti rate limit.
+- Setelah mengubah environment variable di Vercel, lakukan redeploy agar deployment terbaru menerima nilainya.
+- PDF harus berbasis teks, berformat `application/pdf`, dan berukuran maksimal 8 MB.
+
 ## Keamanan data
 
 Semua tabel mengaktifkan Row Level Security tanpa policy publik. Akses data dilakukan oleh Route Handlers setelah memverifikasi pemilik kuis atau token acak peserta. Service-role hanya dibuat di modul server. Jangan pernah memasukkan service-role ke kode client atau repository.

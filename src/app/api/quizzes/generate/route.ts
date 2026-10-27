@@ -1,6 +1,11 @@
 import { randomInt } from "node:crypto";
 
-import { generateText, Output } from "ai";
+import {
+  APICallError,
+  generateText,
+  NoObjectGeneratedError,
+  Output,
+} from "ai";
 import { z } from "zod";
 
 import { getCurrentUserId } from "@/lib/auth";
@@ -38,6 +43,77 @@ function createJoinCode() {
     { length: 6 },
     () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)],
   ).join("");
+}
+
+function generationErrorResponse(error: unknown) {
+  if (APICallError.isInstance(error)) {
+    const status = error.statusCode;
+    const messages: Record<number, string> = {
+      401: "Autentikasi AI Gateway gagal. Periksa AI_GATEWAY_API_KEY atau koneksi OIDC Vercel.",
+      402: "Kredit atau budget AI Gateway tidak mencukupi. Tambahkan kredit atau periksa batas budget di Vercel.",
+      403: "AI Gateway belum dapat digunakan. Selesaikan verifikasi akun atau metode pembayaran di Vercel.",
+      429: "AI Gateway sedang terkena batas permintaan. Tunggu sebentar lalu coba lagi.",
+      503: "Model AI sedang tidak tersedia. Tunggu sebentar lalu coba lagi.",
+    };
+
+    console.error("Quiz AI request failed", {
+      statusCode: status,
+      isRetryable: error.isRetryable,
+      message: error.message,
+    });
+
+    return Response.json(
+      {
+        error:
+          (status ? messages[status] : undefined) ??
+          "Layanan AI gagal membaca PDF. Periksa AI Gateway Logs di Vercel.",
+      },
+      { status: status && status >= 400 && status < 600 ? status : 502 },
+    );
+  }
+
+  if (NoObjectGeneratedError.isInstance(error)) {
+    console.error("Quiz structured output failed", {
+      finishReason: error.finishReason,
+      cause: error.cause,
+    });
+    return Response.json(
+      {
+        error:
+          "AI belum berhasil menyusun soal dari PDF ini. Coba PDF berbasis teks atau kurangi jumlah soal.",
+      },
+      { status: 422 },
+    );
+  }
+
+  const databaseError = error as {
+    code?: string;
+    message?: string;
+    details?: string;
+  };
+  if (
+    databaseError.code === "PGRST204" ||
+    databaseError.message?.includes("duration_minutes") ||
+    databaseError.message?.includes("violations")
+  ) {
+    console.error("Quiz database migration missing", databaseError.code);
+    return Response.json(
+      {
+        error:
+          "Database belum diperbarui. Jalankan migration supabase/migrations/002_exam_mode.sql di Supabase SQL Editor.",
+      },
+      { status: 503 },
+    );
+  }
+
+  console.error("Quiz generation failed", error);
+  return Response.json(
+    {
+      error:
+        "Kuis belum berhasil dibuat. Buka Vercel Runtime Logs untuk melihat detail error server.",
+    },
+    { status: 500 },
+  );
 }
 
 export async function POST(request: Request) {
@@ -92,11 +168,19 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const startOfDay = new Date();
     startOfDay.setUTCHours(0, 0, 0, 0);
-    const { count: generatedToday } = await admin
+    const { count: generatedToday, error: usageError } = await admin
       .from("quizzes")
       .select("id", { count: "exact", head: true })
       .eq("owner_id", userId)
       .gte("created_at", startOfDay.toISOString());
+
+    if (usageError) throw usageError;
+
+    const { error: migrationError } = await admin
+      .from("quizzes")
+      .select("duration_minutes")
+      .limit(1);
+    if (migrationError) throw migrationError;
 
     if ((generatedToday ?? 0) >= DAILY_GENERATION_LIMIT) {
       return Response.json(
@@ -184,13 +268,6 @@ export async function POST(request: Request) {
 
     return Response.json({ quizId: quiz.id, joinCode: quiz.join_code });
   } catch (error) {
-    console.error("Quiz generation failed", error);
-    return Response.json(
-      {
-        error:
-          "Kuis belum berhasil dibuat. Coba PDF lain atau ulangi beberapa saat lagi.",
-      },
-      { status: 500 },
-    );
+    return generationErrorResponse(error);
   }
 }
