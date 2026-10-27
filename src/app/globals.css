@@ -170,3 +170,89 @@
 .animate-pulse-soft {
   animation: pulse-soft 2.5s ease-in-out infinite;
 }
+
+@keyframes guide-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes guide-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes guide-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes guide-orb-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(14px, 18px, 0) scale(1.08);
+  }
+}
+
+.guide-backdrop {
+  animation: guide-backdrop-in 240ms ease-out both;
+}
+
+.guide-panel {
+  animation: guide-panel-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.guide-step {
+  animation: guide-step-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.guide-step:nth-child(1) {
+  animation-delay: 120ms;
+}
+
+.guide-step:nth-child(2) {
+  animation-delay: 180ms;
+}
+
+.guide-step:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+.guide-step:nth-child(4) {
+  animation-delay: 300ms;
+}
+
+.guide-orb {
+  animation: guide-orb-float 8s ease-in-out infinite;
+}
+
+.guide-orb-delayed {
+  animation-delay: -4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-backdrop,
+  .guide-panel,
+  .guide-step,
+  .guide-orb {
+    animation: none;
+  }
+}

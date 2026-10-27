@@ -17,11 +17,11 @@ export default function CreateQuizPage() {
           <Sparkles className="size-4" /> Generator kuis AI
         </div>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-neutral-950 sm:text-4xl">
-          Ubah PDF menjadi kuis
+          Ubah dokumen soal menjadi kuis
         </h1>
         <p className="mt-3 max-w-2xl text-neutral-600">
-          Unggah materi, pilih tingkat kesulitan, lalu AI menyiapkan ruang kuis
-          beserta kode bergabung.
+          Unggah soal dalam format PDF atau Word (.docx), pilih pengaturan, lalu
+          AI menyiapkan ruang kuis beserta kode bergabung.
         </p>
       </div>
       <QuizBuilder />

@@ -12,16 +12,16 @@ const steps: Step[] = [
   {
     icon: FileUp,
     number: "01",
-    title: "Upload Materi PDF",
+    title: "Upload Dokumen Soal",
     description:
-      "Unggah file PDF materi pelajaran, rangkuman, atau catatan kuliahmu. Prosesnya cepat dan mendukung berbagai ukuran file.",
+      "Unggah file PDF atau Word (.docx) berisi soal, maksimal 4 MB.",
   },
   {
     icon: BrainCircuit,
     number: "02",
-    title: "AI Menganalisis Materi",
+    title: "AI Membaca Soal",
     description:
-      "Kecerdasan buatan membaca seluruh dokumen, memahami poin-poin penting, dan menyusun pertanyaan berkualitas secara otomatis.",
+      "AI membaca soal dan kunci jawaban pada dokumen, lalu melengkapi jawaban yang belum tersedia.",
   },
   {
     icon: ClipboardCheck,
@@ -58,8 +58,8 @@ export function HowItWorks() {
             <span className="text-orange-600">Tanpa Ribet</span>
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-neutral-600">
-            Tidak perlu keahlian khusus. Dari PDF biasa menjadi quiz yang siap
-            menguji pemahamanmu hanya dalam hitungan detik.
+            Tidak perlu keahlian khusus. Dari dokumen soal menjadi quiz yang
+            siap digunakan hanya dalam hitungan detik.
           </p>
         </div>
 

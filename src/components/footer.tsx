@@ -1,6 +1,8 @@
-import { GraduationCap, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube } from "react-icons/fa";
+
+import { Brand } from "@/components/app/brand";
 
 const footerColumns = [
   {
@@ -62,22 +64,11 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Brand */}
           <div className="lg:col-span-5">
-            <Link
-              href="#beranda"
-              className="inline-flex items-center gap-2.5"
-              aria-label="Belajar Mandiri — kembali ke atas"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25">
-                <GraduationCap className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <span className="text-lg font-extrabold tracking-tight text-white">
-                Belajar<span className="text-orange-500">Mandiri</span>
-              </span>
-            </Link>
+            <Brand href="#beranda" tone="light" />
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-400">
-              Platform belajar mandiri yang mengubah materi PDF-mu menjadi quiz
-              interaktif dengan bantuan AI. Belajar jadi lebih cepat, seru, dan
-              terukur — kapan pun dan di mana pun.
+              Platform yang mengubah dokumen soal PDF atau Word menjadi quiz
+              interaktif dengan bantuan AI. Pembuatan dan penilaian kuis jadi
+              lebih cepat dan terukur.
             </p>
             <div className="mt-6 flex items-center gap-3">
               {socials.map((social) => (
