@@ -1,9 +1,6 @@
 import {
   ArrowRight,
   Brain,
-  FileText,
-  Plus,
-  Radio,
   Sparkles,
   CalendarClock,
   FileText,
