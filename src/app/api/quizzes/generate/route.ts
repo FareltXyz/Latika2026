@@ -46,6 +46,22 @@ function createJoinCode() {
 }
 
 function generationErrorResponse(error: unknown) {
+  if (
+    error instanceof Error &&
+    (error.name === "GatewayError" ||
+      error.name === "GatewayAuthenticationError") &&
+    error.message.toLowerCase().includes("unauthenticated")
+  ) {
+    console.error("Quiz AI Gateway authentication missing", error.message);
+    return Response.json(
+      {
+        error:
+          "AI Gateway belum terautentikasi. Tambahkan AI_GATEWAY_API_KEY untuk Production di Vercel lalu redeploy.",
+      },
+      { status: 503 },
+    );
+  }
+
   if (APICallError.isInstance(error)) {
     const status = error.statusCode;
     const messages: Record<number, string> = {
