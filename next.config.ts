@@ -1,12 +1,9 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === "production";
 const nextConfig: NextConfig = {
   /* config options here */
   output: "export",
-  ...(isProd && {
-    basePath: "/Latika2026",
-  }),
+  basePath: process.env.GITHUB_PAGES === "true" ? "/Latika2026" : "",
   images: {
     unoptimized: true,
   },
