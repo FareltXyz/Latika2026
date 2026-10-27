@@ -56,7 +56,7 @@ export function QuizBuilder() {
   const [questionCount, setQuestionCount] = useState("8");
   const [difficulty, setDifficulty] = useState("sedang");
   const [durationMinutes, setDurationMinutes] = useState("20");
-  const [retentionDays, setRetentionDays] = useState("3");
+  const [retentionDays, setRetentionDays] = useState("7");
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -250,7 +250,7 @@ export function QuizBuilder() {
             Masa simpan kuis
           </legend>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            {[3, 5].map((days) => (
+            {[7, 14].map((days) => (
               <button
                 key={days}
                 type="button"

@@ -52,7 +52,7 @@ const sections = [
     icon: Clock3,
     title: "Masa penyimpanan",
     content: [
-      "Pengajar memilih masa simpan kuis selama 3 atau 5 hari sejak kuis dibuat.",
+      "Pengajar memilih masa simpan kuis selama 7 atau 14 hari sejak kuis dibuat.",
       "Setelah masa simpan berakhir, kuis beserta pertanyaan, peserta, jawaban, nilai, dan catatan terkait dihapus otomatis.",
     ],
   },
