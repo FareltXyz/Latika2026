@@ -69,6 +69,7 @@ function generationErrorResponse(error: unknown) {
           400: "Google API key atau permintaan Gemini tidak valid. Periksa GOOGLE_GENERATIVE_AI_API_KEY dan model yang dipakai.",
           401: "Google API key tidak valid atau sudah dinonaktifkan.",
           403: "Google Gemini API menolak akses. Periksa API restrictions, quota, dan billing pada project Google.",
+          404: "Model Google Gemini tidak tersedia. Gunakan GOOGLE_AI_MODEL=gemini-3.8-flash.",
           429: "Quota Google Gemini API sudah tercapai. Tunggu hingga quota tersedia atau naikkan batasnya.",
           503: "Google Gemini sedang tidak tersedia. Tunggu sebentar lalu coba lagi.",
         }
@@ -225,10 +226,13 @@ export async function POST(request: Request) {
     }
 
     const pdf = new Uint8Array(await file.arrayBuffer());
+    const configuredGoogleModel = process.env.GOOGLE_AI_MODEL?.trim();
+    const googleModel =
+      !configuredGoogleModel || configuredGoogleModel === "gemini-2.5-flash"
+        ? "gemini-3.8-flash"
+        : configuredGoogleModel;
     const model = googleApiKey
-      ? createGoogleGenerativeAI({ apiKey: googleApiKey })(
-          process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash",
-        )
+      ? createGoogleGenerativeAI({ apiKey: googleApiKey })(googleModel)
       : (process.env.AI_MODEL ?? "google/gemini-3.8-flash");
     const { output } = await generateText({
       model,
