@@ -11,6 +11,7 @@ Aplikasi Next.js untuk mengubah dokumen soal PDF atau Word menjadi kuis pilihan 
 - AI mengikuti kunci jawaban yang tertulis di dokumen; bila tidak ada kunci, AI menyelesaikan soal sebelum membuat kuis
 - Kode ruang kuis, lobby peserta, dan kontrol mulai/selesai
 - Durasi kuis dari host, hitung mundur, serta pengiriman otomatis saat waktu habis
+- Musik latar otomatis yang berulang selama peserta mengerjakan kuis, dengan kontrol suara jika autoplay diblokir browser
 - Mode ujian fullscreen dengan deteksi keluar tab/fokus/fullscreen, alarm browser, dan pencatatan pelanggaran
 - Penilaian otomatis, rekap nilai, jawaban salah, kunci, dan pembahasan
 - Masa simpan kuis 3 atau 5 hari, cleanup otomatis, dan tombol hapus untuk kuis yang sudah selesai
