@@ -15,7 +15,7 @@ Aplikasi Next.js untuk mengubah dokumen soal PDF atau Word menjadi kuis pilihan 
 - Musik latar otomatis yang berulang selama peserta mengerjakan kuis, dengan kontrol suara jika autoplay diblokir browser
 - Mode ujian fullscreen dengan deteksi keluar tab/fokus/fullscreen, alarm browser, dan pencatatan pelanggaran
 - Penilaian otomatis, rekap nilai, jawaban salah, kunci, dan pembahasan
-- Masa simpan kuis 3 atau 5 hari, cleanup otomatis, dan tombol hapus untuk kuis yang sudah selesai
+- Masa simpan kuis 7 atau 14 hari, cleanup otomatis, dan tombol hapus untuk kuis yang sudah selesai
 - Dokumen diproses saat generasi dan tidak disimpan di database aplikasi
 - Halaman kebijakan privasi menjelaskan pemrosesan dokumen, penyimpanan data, dan layanan pihak ketiga
 - Siap dijalankan di Vercel dengan Supabase dan Vercel AI Gateway
@@ -24,7 +24,7 @@ Aplikasi Next.js untuk mengubah dokumen soal PDF atau Word menjadi kuis pilihan 
 
 1. Gunakan Node.js 20 atau lebih baru.
 2. Salin `.env.example` menjadi `.env.local`, lalu isi semua nilainya.
-3. Jalankan migration di folder `supabase/migrations` sesuai urutan melalui Supabase SQL Editor. Untuk database lama, jalankan migration baru yang belum pernah diterapkan, termasuk `003_quiz_retention.sql`.
+3. Jalankan migration di folder `supabase/migrations` sesuai urutan melalui Supabase SQL Editor. Untuk database lama, jalankan migration baru yang belum pernah diterapkan, termasuk `003_quiz_retention.sql` dan `004_quiz_retention_7_14.sql`.
 4. Instal dan jalankan proyek:
 
 ```bash
@@ -85,7 +85,7 @@ Vercel Cron memanggil `/api/cron/cleanup-quizzes` setiap hari pukul 00:15 UTC. E
 
 ## Jika generate kuis gagal
 
-- Pastikan migration `001_initial.sql`, `002_exam_mode.sql`, dan `003_quiz_retention.sql` sudah dijalankan di Supabase SQL Editor sesuai urutan.
+- Pastikan migration `001_initial.sql`, `002_exam_mode.sql`, `003_quiz_retention.sql`, dan `004_quiz_retention_7_14.sql` sudah dijalankan di Supabase SQL Editor sesuai urutan.
 - Buka **Vercel → AI Gateway → Logs** untuk melihat status request. Error `401` berarti autentikasi Gateway bermasalah, `402` berarti kredit/budget tidak cukup, `403` biasanya memerlukan verifikasi akun atau metode pembayaran, dan `429` berarti rate limit.
 - Setelah mengubah environment variable di Vercel, lakukan redeploy agar deployment terbaru menerima nilainya.
 - Dokumen harus berisi soal, berformat PDF atau Word `.docx`, dan berukuran maksimal 4 MB. Format Word lama `.doc` perlu disimpan ulang menjadi `.docx`.

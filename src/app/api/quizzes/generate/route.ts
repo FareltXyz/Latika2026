@@ -152,16 +152,21 @@ function generationErrorResponse(error: unknown) {
     message?: string;
     details?: string;
   };
+  const retentionError = `${databaseError.message ?? ""} ${
+    databaseError.details ?? ""
+  }`;
   if (
-    databaseError.code === "PGRST204" &&
-    (databaseError.message?.includes("retention_days") ||
-      databaseError.message?.includes("expires_at"))
+    (databaseError.code === "PGRST204" &&
+      (databaseError.message?.includes("retention_days") ||
+        databaseError.message?.includes("expires_at"))) ||
+    (databaseError.code === "23514" &&
+      retentionError.includes("quizzes_retention_days_check"))
   ) {
     console.error("Quiz retention migration missing", databaseError.code);
     return Response.json(
       {
         error:
-          "Database belum mendukung masa simpan. Jalankan migration supabase/migrations/003_quiz_retention.sql di Supabase SQL Editor.",
+          "Database belum mendukung masa simpan 7–14 hari. Jalankan migration 003_quiz_retention.sql lalu 004_quiz_retention_7_14.sql di Supabase SQL Editor.",
       },
       { status: 503 },
     );
@@ -221,11 +226,11 @@ export async function POST(request: Request) {
     const file = formData.get("file");
     const requestedCount = Number(formData.get("questionCount") ?? 8);
     const requestedDuration = Number(formData.get("durationMinutes") ?? 20);
-    const requestedRetention = Number(formData.get("retentionDays") ?? 3);
+    const requestedRetention = Number(formData.get("retentionDays") ?? 7);
     const difficulty = String(formData.get("difficulty") ?? "sedang");
     const questionCount = Math.min(25, Math.max(3, requestedCount));
     const durationMinutes = Math.min(180, Math.max(5, requestedDuration));
-    const retentionDays = requestedRetention === 5 ? 5 : 3;
+    const retentionDays = requestedRetention === 14 ? 14 : 7;
 
     if (!(file instanceof File)) {
       return Response.json(
