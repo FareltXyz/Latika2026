@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "Apakah ada batas jumlah halaman untuk file PDF?",
     answer:
-      "Versi awal membatasi ukuran file hingga 8 MB. Jika PDF lebih besar, kompres atau pecah dokumen menjadi beberapa bagian sebelum diunggah.",
+      "Sistem membatasi ukuran file hingga 4 MB agar sesuai dengan batas unggahan Vercel. Jika PDF lebih besar, kompres atau pecah dokumen menjadi beberapa bagian sebelum diunggah.",
   },
   {
     question: "Tipe soal apa saja yang bisa dihasilkan?",

@@ -25,7 +25,7 @@ const features: Feature[] = [
     icon: FileUp,
     title: "Upload PDF Tanpa Ribet",
     description:
-      "Cukup drag & drop file PDF materi pelajaran, catatan kuliah, atau modul hingga 8 MB. File tidak disimpan permanen setelah diproses.",
+      "Cukup drag & drop file PDF materi pelajaran, catatan kuliah, atau modul hingga 4 MB. File tidak disimpan permanen setelah diproses.",
   },
   {
     icon: ListChecks,

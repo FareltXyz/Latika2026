@@ -267,7 +267,7 @@ export function QuizBuilder() {
         </Button>
         {loading && (
           <p className="mt-3 text-center text-xs text-neutral-500">
-            Biasanya membutuhkan 15–45 detik.
+            Biasanya membutuhkan 15–90 detik. Jangan tutup halaman ini.
           </p>
         )}
       </aside>

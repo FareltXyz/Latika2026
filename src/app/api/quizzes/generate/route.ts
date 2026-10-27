@@ -1,6 +1,9 @@
 import { randomInt } from "node:crypto";
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import {
+  createGoogleGenerativeAI,
+  type GoogleLanguageModelOptions,
+} from "@ai-sdk/google";
 import { APICallError, generateText, NoObjectGeneratedError, Output } from "ai";
 import { z } from "zod";
 
@@ -8,11 +11,19 @@ import { getCurrentUserId } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 // Keep the complete multipart request below Vercel Functions' 4.5 MB limit.
 const MAX_PDF_SIZE = 4 * 1024 * 1024;
 const DAILY_GENERATION_LIMIT = 10;
+const MODEL_TIMEOUT_MS = 45_000;
+const DEFAULT_GOOGLE_MODEL = "gemini-3.5-flash-lite";
+const PREVIOUS_DEFAULT_MODELS = new Set([
+  "gemini-2.5-flash",
+  "gemini-3.6-flash",
+  "gemini-3.7-flash",
+  "gemini-3.8-flash",
+]);
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const generatedQuizSchema = z.object({
@@ -40,6 +51,15 @@ function createJoinCode() {
     { length: 6 },
     () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)],
   ).join("");
+}
+
+function isGenerationTimeout(error: unknown): error is Error {
+  return (
+    error instanceof Error &&
+    (error.name === "TimeoutError" ||
+      error.name === "AbortError" ||
+      error.message.toLowerCase().includes("timeout"))
+  );
 }
 
 function generationErrorResponse(error: unknown) {
@@ -70,7 +90,7 @@ function generationErrorResponse(error: unknown) {
           400: "Google API key atau permintaan Gemini tidak valid. Periksa GOOGLE_GENERATIVE_AI_API_KEY dan model yang dipakai.",
           401: "Google API key tidak valid atau sudah dinonaktifkan.",
           403: "Google Gemini API menolak akses. Periksa API restrictions, quota, dan billing pada project Google.",
-          404: "Model Google Gemini tidak tersedia. Gunakan GOOGLE_AI_MODEL=gemini-3.8-flash.",
+          404: "Model Google Gemini tidak tersedia. Gunakan GOOGLE_AI_MODEL=gemini-3.5-flash-lite.",
           429: "Quota Google Gemini API sudah tercapai. Tunggu hingga quota tersedia atau naikkan batasnya.",
           503: "Google Gemini sedang tidak tersedia. Tunggu sebentar lalu coba lagi.",
         }
@@ -111,6 +131,17 @@ function generationErrorResponse(error: unknown) {
           "AI belum berhasil menyusun soal dari PDF ini. Coba PDF berbasis teks atau kurangi jumlah soal.",
       },
       { status: 422 },
+    );
+  }
+
+  if (isGenerationTimeout(error)) {
+    console.error("Quiz AI request timed out", error.message);
+    return Response.json(
+      {
+        error:
+          "AI belum selesai memproses PDF dalam batas waktu. Coba lagi atau gunakan PDF yang lebih ringkas.",
+      },
+      { status: 504 },
     );
   }
 
@@ -232,16 +263,20 @@ export async function POST(request: Request) {
     const pdf = new Uint8Array(await file.arrayBuffer());
     const configuredGoogleModel = process.env.GOOGLE_AI_MODEL?.trim();
     const googleModel =
-      !configuredGoogleModel || configuredGoogleModel === "gemini-2.5-flash"
-        ? "gemini-3.8-flash"
+      !configuredGoogleModel ||
+      PREVIOUS_DEFAULT_MODELS.has(configuredGoogleModel)
+        ? DEFAULT_GOOGLE_MODEL
         : configuredGoogleModel;
     const runGeneration = (
       selectedModel: Parameters<typeof generateText>[0]["model"],
       maxRetries: number,
+      timeoutMs: number,
     ) =>
       generateText({
         model: selectedModel,
         maxRetries,
+        maxOutputTokens: 8_192,
+        timeout: { totalMs: timeoutMs },
         output: Output.object({
           name: "QuizDariPDF",
           description: "Kuis pilihan ganda berbahasa Indonesia berdasarkan PDF",
@@ -249,6 +284,11 @@ export async function POST(request: Request) {
         }),
         system:
           "Anda adalah guru Indonesia yang teliti. Jika PDF memuat soal beserta jawaban atau kunci jawaban, pertahankan jawaban yang tercantum di PDF sebagai jawaban benar. Jika PDF memuat soal tanpa jawaban, kerjakan sendiri soal tersebut dengan penalaran yang benar sebelum membuat empat opsi. Jika PDF hanya berisi materi, buat soal dari konsep penting lalu tentukan sendiri jawaban yang benar. Setiap soal harus punya tepat satu jawaban benar, opsi pengecoh yang masuk akal, dan penjelasan yang menerangkan alasan jawabannya. Jangan mengubah kunci jawaban eksplisit dari PDF. Gunakan bahasa Indonesia yang jelas.",
+        providerOptions: {
+          google: {
+            thinkingConfig: { thinkingLevel: "low" },
+          } satisfies GoogleLanguageModelOptions,
+        },
         messages: [
           {
             role: "user",
@@ -272,23 +312,27 @@ export async function POST(request: Request) {
     if (googleApiKey) {
       const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
       const fallbackModels = Array.from(
-        new Set([googleModel, "gemini-3.7-flash", "gemini-3.6-flash"]),
+        new Set([googleModel, "gemini-3.1-flash-lite", "gemini-3.8-flash"]),
       );
       let lastError: unknown;
 
       for (const modelId of fallbackModels) {
         try {
-          output = (await runGeneration(google(modelId), 0)).output;
+          output = (await runGeneration(google(modelId), 0, MODEL_TIMEOUT_MS))
+            .output;
           break;
         } catch (error) {
           lastError = error;
           const canFallback =
-            APICallError.isInstance(error) &&
-            (error.statusCode === 429 || error.statusCode === 503);
+            (APICallError.isInstance(error) &&
+              (error.statusCode === 429 || error.statusCode === 503)) ||
+            isGenerationTimeout(error);
           if (!canFallback) throw error;
-          console.warn("Google model capacity fallback", {
+          console.warn("Google model fallback", {
             modelId,
-            statusCode: error.statusCode,
+            reason: APICallError.isInstance(error)
+              ? `HTTP ${error.statusCode}`
+              : "timeout",
           });
         }
       }
@@ -297,8 +341,9 @@ export async function POST(request: Request) {
     } else {
       output = (
         await runGeneration(
-          process.env.AI_MODEL ?? "google/gemini-3.8-flash",
-          2,
+          process.env.AI_MODEL ?? "google/gemini-3.5-flash-lite",
+          1,
+          120_000,
         )
       ).output;
     }

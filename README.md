@@ -6,7 +6,7 @@ Aplikasi Next.js untuk mengubah materi PDF menjadi kuis pilihan ganda dengan AI.
 
 - Login pengajar dengan Google atau email + kata sandi
 - Verifikasi email melalui Supabase Auth
-- Generasi 5–15 soal dari PDF (maksimal 8 MB)
+- Generasi 5–15 soal dari PDF (maksimal 4 MB)
 - AI mengikuti kunci jawaban yang tertulis di PDF; bila tidak ada kunci, AI menyelesaikan soal sebelum membuat kuis
 - Kode ruang kuis, lobby peserta, dan kontrol mulai/selesai
 - Durasi kuis dari host, hitung mundur, serta pengiriman otomatis saat waktu habis
@@ -60,10 +60,14 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 GOOGLE_GENERATIVE_AI_API_KEY (direkomendasikan jika memakai Google AI Studio)
-GOOGLE_AI_MODEL=gemini-3.8-flash
+GOOGLE_AI_MODEL=gemini-3.5-flash-lite
 AI_GATEWAY_API_KEY (alternatif; tidak wajib jika Google API key tersedia)
-AI_MODEL=google/gemini-3.8-flash
+AI_MODEL=google/gemini-3.5-flash-lite
 ```
+
+Gemini 3.5 Flash-Lite digunakan sebagai model utama untuk throughput yang lebih
+tinggi. Jika Google sedang penuh atau terkena batas sementara, aplikasi mencoba
+Gemini 3.1 Flash-Lite lalu Gemini 3.8 Flash secara otomatis.
 
 `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, dan `AI_GATEWAY_API_KEY` tidak boleh memakai prefix `NEXT_PUBLIC_`. Jika key Google dan Gateway sama-sama tersedia, aplikasi memprioritaskan Google API secara langsung.
 
@@ -76,7 +80,7 @@ Import repository ke Vercel, tambahkan environment variables di atas, lalu deplo
 - Pastikan migration `001_initial.sql` dan `002_exam_mode.sql` sudah dijalankan di Supabase SQL Editor.
 - Buka **Vercel → AI Gateway → Logs** untuk melihat status request. Error `401` berarti autentikasi Gateway bermasalah, `402` berarti kredit/budget tidak cukup, `403` biasanya memerlukan verifikasi akun atau metode pembayaran, dan `429` berarti rate limit.
 - Setelah mengubah environment variable di Vercel, lakukan redeploy agar deployment terbaru menerima nilainya.
-- PDF harus berbasis teks, berformat `application/pdf`, dan berukuran maksimal 8 MB.
+- PDF harus berbasis teks, berformat `application/pdf`, dan berukuran maksimal 4 MB.
 
 ## Keamanan data
 
