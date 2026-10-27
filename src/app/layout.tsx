@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+
+import { WelcomeGuide } from "@/components/app/welcome-guide";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Belajar Mandiri — Kuis AI dari PDF",
+  title: "Belajar Mandiri — Kuis AI dari PDF & Word",
   description:
-    "Ubah materi PDF menjadi kuis interaktif, bagikan kode ruang, dan pantau hasil peserta.",
+    "Ubah dokumen soal PDF atau Word menjadi kuis interaktif, bagikan kode ruang, dan pantau hasil peserta.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -27,6 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <body className="min-h-full flex flex-col selection:bg-orange-200 selection:text-orange-950">
         {children}
+        <WelcomeGuide />
       </body>
     </html>
   );

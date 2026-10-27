@@ -117,7 +117,7 @@ export function AuthForm({ initialError }: { initialError?: string }) {
       </h1>
       <p className="mt-2 text-sm leading-relaxed text-neutral-500">
         {mode === "login"
-          ? "Masuk untuk membuat dan mengelola kuis dari materi Anda."
+          ? "Masuk untuk membuat dan mengelola kuis dari dokumen soal Anda."
           : "Daftar gratis. Kami akan mengirim tautan verifikasi ke Gmail Anda."}
       </p>
 

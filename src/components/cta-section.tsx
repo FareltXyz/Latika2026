@@ -43,9 +43,8 @@ export function CtaSection() {
             </h2>
 
             <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-400 sm:text-lg">
-              Bergabung dengan ribuan pelajar yang sudah meningkatkan hasil
-              belajarnya. Upload PDF pertamamu dan lihat magic-nya dalam
-              hitungan detik.
+              Upload dokumen soal PDF atau Word pertamamu, buat ruang kuis, dan
+              bagikan kode kepada peserta dalam hitungan detik.
             </p>
 
             <div className="mt-9">

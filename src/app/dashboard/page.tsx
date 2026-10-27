@@ -1,7 +1,15 @@
-import { ArrowRight, FileText, Plus, Radio, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  FileText,
+  Plus,
+  Radio,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { DeleteQuizButton } from "@/components/app/delete-quiz-button";
 import { getCurrentUserId } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -15,10 +23,28 @@ export default async function DashboardPage() {
   const userId = await getCurrentUserId();
   if (!userId) redirect("/auth");
   const admin = createAdminClient();
-  const { data: quizzes } = await admin
+  const now = new Date().toISOString();
+
+  // Also clean up when the owner opens the dashboard, so expiration remains
+  // reliable even if a scheduled cleanup is temporarily delayed.
+  await admin
+    .from("quizzes")
+    .update({ status: "finished" })
+    .eq("owner_id", userId)
+    .eq("status", "live")
+    .lte("ends_at", now);
+
+  await admin
+    .from("quizzes")
+    .delete()
+    .eq("owner_id", userId)
+    .neq("status", "live")
+    .lte("expires_at", now);
+
+  const { data: quizzes, error: quizzesError } = await admin
     .from("quizzes")
     .select(
-      "id, title, description, join_code, status, source_name, created_at, participants(count)",
+      "id, title, description, join_code, status, source_name, retention_days, expires_at, created_at, participants(count)",
     )
     .eq("owner_id", userId)
     .order("created_at", { ascending: false });
@@ -41,8 +67,8 @@ export default async function DashboardPage() {
               Buat sesi belajar berikutnya.
             </h1>
             <p className="mt-3 max-w-xl text-neutral-400">
-              Generate soal dari PDF, bagikan kode, lalu lihat hasil peserta
-              secara langsung.
+              Generate soal dari PDF atau Word, bagikan kode, lalu lihat hasil
+              peserta secara langsung.
             </p>
           </div>
           <Link
@@ -91,7 +117,16 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {!quizzes?.length ? (
+      {quizzesError ? (
+        <section
+          role="alert"
+          className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm leading-relaxed text-red-800"
+        >
+          Data kuis belum dapat dimuat. Jalankan migration
+          <strong> supabase/migrations/003_quiz_retention.sql</strong> di
+          Supabase SQL Editor, lalu muat ulang halaman.
+        </section>
+      ) : !quizzes?.length ? (
         <section className="mt-6 rounded-[1.75rem] border border-dashed border-neutral-300 bg-white px-6 py-16 text-center">
           <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
             <FileText className="size-7" />
@@ -100,7 +135,7 @@ export default async function DashboardPage() {
             Belum ada kuis
           </h3>
           <p className="mt-2 text-sm text-neutral-500">
-            Unggah PDF pertama Anda untuk memulai.
+            Unggah dokumen soal pertama Anda untuk memulai.
           </p>
           <Link
             href="/dashboard/create"
@@ -136,18 +171,35 @@ export default async function DashboardPage() {
                 <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-relaxed text-neutral-500">
                   {quiz.description}
                 </p>
+                <p className="mt-4 flex items-center gap-2 text-xs font-medium text-neutral-500">
+                  <CalendarClock className="size-4 text-orange-600" />
+                  Tersimpan sampai{" "}
+                  {new Intl.DateTimeFormat("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  }).format(new Date(quiz.expires_at))}
+                </p>
                 <div className="mt-5 flex items-center justify-between border-t border-neutral-100 pt-4">
                   <span className="flex items-center gap-2 text-sm text-neutral-500">
                     <Users className="size-4" />{" "}
                     {quiz.participants?.[0]?.count ?? 0} peserta
                   </span>
-                  <Link
-                    href={`/dashboard/quiz/${quiz.id}`}
-                    className="flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700"
-                  >
-                    Buka{" "}
-                    <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
-                  </Link>
+                  <div className="flex items-center gap-4">
+                    {quiz.status === "finished" && (
+                      <DeleteQuizButton
+                        quizId={quiz.id}
+                        quizTitle={quiz.title}
+                      />
+                    )}
+                    <Link
+                      href={`/dashboard/quiz/${quiz.id}`}
+                      className="flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700"
+                    >
+                      Buka{" "}
+                      <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
+                    </Link>
+                  </div>
                 </div>
               </article>
             );

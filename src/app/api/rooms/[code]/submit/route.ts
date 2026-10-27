@@ -17,8 +17,9 @@ export async function POST(
   const admin = createAdminClient();
   const { data: quiz } = await admin
     .from("quizzes")
-    .select("id, status, ends_at")
+    .select("id, status, ends_at, expires_at")
     .eq("join_code", rawCode.toUpperCase())
+    .gt("expires_at", new Date().toISOString())
     .maybeSingle();
 
   if (!quiz || quiz.status !== "live") {

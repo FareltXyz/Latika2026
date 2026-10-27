@@ -29,7 +29,7 @@ export default async function AuthPage({
             Ruang kuis siap dalam hitungan menit
           </span>
           <h2 className="mt-6 max-w-xl text-5xl font-extrabold leading-[1.08] tracking-tight text-neutral-950">
-            Dari PDF menjadi pengalaman belajar yang hidup.
+            Dari dokumen soal menjadi pengalaman belajar yang hidup.
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-neutral-600">
             Buat soal dengan AI, bagikan kode enam karakter, dan pantau hasil
@@ -37,7 +37,7 @@ export default async function AuthPage({
           </p>
           <ul className="mt-8 space-y-4">
             {[
-              "PDF tidak disimpan permanen",
+              "PDF dan DOCX tidak disimpan permanen",
               "Jawaban dinilai otomatis",
               "Peserta cukup memakai kode kuis",
             ].map((item) => (

@@ -7,10 +7,11 @@ async function getOwnedQuiz(id: string, userId: string) {
   const { data } = await admin
     .from("quizzes")
     .select(
-      "id, title, description, join_code, status, source_name, duration_minutes, started_at, ends_at, created_at",
+      "id, title, description, join_code, status, source_name, duration_minutes, retention_days, expires_at, started_at, ends_at, created_at",
     )
     .eq("id", id)
     .eq("owner_id", userId)
+    .gt("expires_at", new Date().toISOString())
     .maybeSingle();
 
   return { admin, quiz: data };
@@ -134,4 +135,43 @@ export async function PATCH(
     );
 
   return Response.json(update);
+}
+
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const userId = await getCurrentUserId();
+  if (!userId)
+    return Response.json({ error: "Tidak diizinkan." }, { status: 401 });
+
+  const { id } = await context.params;
+  const { admin, quiz } = await getOwnedQuiz(id, userId);
+  if (!quiz)
+    return Response.json({ error: "Kuis tidak ditemukan." }, { status: 404 });
+
+  if (quiz.status !== "finished") {
+    return Response.json(
+      { error: "Hanya kuis yang sudah selesai yang dapat dihapus." },
+      { status: 409 },
+    );
+  }
+
+  const { error } = await admin
+    .from("quizzes")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", userId)
+    .eq("status", "finished");
+
+  if (error) {
+    console.error("Quiz deletion failed", {
+      quizId: id,
+      code: error.code,
+      message: error.message,
+    });
+    return Response.json({ error: "Kuis gagal dihapus." }, { status: 500 });
+  }
+
+  return Response.json({ deleted: true });
 }
