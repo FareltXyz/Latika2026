@@ -105,7 +105,7 @@ Dokumentasi resmi repositori proyek **Belajar Mandiri**. Berkas ini disusun sesu
 ## d. Panduan Penggunaan
 
 ### Tautan Situs Web Aktif
-- **Tautan Website (Production)**: `https://latika2026.vercel.app` *(Silakan perbarui dengan URL deployment aktif Anda)*
+- **Tautan Website (Production)**: `https://belajarmandiri.vercel.app/`
 - **Tautan Repositori GitHub**: [https://github.com/FareltXyz/Latika2026](https://github.com/FareltXyz/Latika2026)
 
 ---
