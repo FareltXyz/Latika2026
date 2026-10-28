@@ -209,14 +209,14 @@ http://localhost:3000
 ### Tim Pengembang
 
 #### 1. Peserta 1 (Ketua Tim)
-- **Nama Lengkap**: `Muhammad Arivito`
+- **Nama Lengkap**: `Muhammad Farel Wardhana`
 - **Kelas**: `XI`
 - **Jurusan**: `Teknik Jaringan Komputer dan Telekomunikasi`
 - **Asal Sekolah**: `SMKN GUDO`
 - **Peran / Tanggung Jawab**: `[Frontend / Backend / Integrasi AI / Desain Antarmuka]`
 
 #### 2. Peserta 2 (Anggota Tim)
-- **Nama Lengkap**: `Muhammad Farel Wardhana`
+- **Nama Lengkap**: `Muhammad Arivito`
 - **Kelas**: `XI`
 - **Jurusan**: `Teknik Jaringan Komputer dan Telekomunikasi`
 - **Asal Sekolah**: `SMKN GUDO`
@@ -226,4 +226,4 @@ http://localhost:3000
 - **Nama Sekolah**: `SMKN GUDO`
 - **Alamat Sekolah**: `Jalan Pawiyatan No 06 Gudo Jombang`
 - **Website Sekolah**: `https://www.smkngudo.sch.id/`
-- **Email Tim / Sekolah**: `arivito.com@gmail.com`
+- **Email Tim / Sekolah**: `muhammadfarelwardhana@gmail.com`
