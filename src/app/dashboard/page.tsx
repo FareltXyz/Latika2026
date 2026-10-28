@@ -334,6 +334,50 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Join Quiz Card */}
+      <section className="group relative mt-6 overflow-hidden rounded-[2rem] border border-orange-200/80 bg-gradient-to-br from-white via-orange-50/40 to-amber-50/60 p-6 text-neutral-950 shadow-xl shadow-orange-950/5 transition hover:border-orange-300 sm:p-8">
+        {/* Glow ambient effects */}
+        <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-orange-400/10 blur-3xl transition duration-500 group-hover:bg-orange-400/15" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 size-48 rounded-full bg-amber-300/15 blur-2xl" />
+
+        {/* Decorative watermark */}
+        <div className="pointer-events-none absolute -right-4 -bottom-6 text-orange-950/5 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:text-orange-950/[0.08] sm:-right-2 sm:-bottom-4">
+          <Radio className="size-48 stroke-[1.25] sm:size-56" />
+        </div>
+
+        <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
+          <div className="flex items-start gap-4 sm:gap-5">
+            <span className="flex size-13 shrink-0 items-center justify-center rounded-2xl bg-orange-600 text-white shadow-lg shadow-orange-600/25 sm:size-14">
+              <Radio className="size-6 animate-pulse sm:size-7" />
+            </span>
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-0.5 text-xs font-bold text-orange-700 backdrop-blur-sm">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-ping" />
+                <span>Mode Peserta</span>
+              </div>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-neutral-950 sm:text-3xl">
+                Punya Kode Kuis? Gabung Sekarang.
+              </h2>
+              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-neutral-600 sm:text-base">
+                Ingin mengikuti sesi kuis atau mencoba simulasi ujian peserta?
+                Masukkan 6 digit kode kuis dan langsung kerjakan tanpa perlu
+                keluar dari akun.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0">
+            <Link
+              href="/join"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-6 font-bold text-white shadow-lg shadow-neutral-950/15 transition-all hover:-translate-y-0.5 hover:bg-neutral-800 hover:shadow-xl active:scale-[0.98]"
+            >
+              <span>Gabung Kuis</span>
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <Suspense fallback={<DashboardQuizzesSkeleton />}>
         <DashboardQuizzesSection />
       </Suspense>

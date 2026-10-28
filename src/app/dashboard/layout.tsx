@@ -20,7 +20,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-[#fafafa]">
       <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Brand href="/dashboard" />
+          <Brand href="/" />
           <nav className="flex items-center gap-1 sm:gap-2">
             <Link
               href="/dashboard"
