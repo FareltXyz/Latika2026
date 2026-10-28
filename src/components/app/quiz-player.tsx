@@ -4,6 +4,7 @@ import {
   AlarmClock,
   ArrowLeft,
   ArrowRight,
+  Ban,
   CheckCircle2,
   Clock3,
   Expand,
@@ -17,6 +18,7 @@ import {
   VolumeX,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -39,11 +41,13 @@ type RoomData = {
   };
   questions: Question[];
   result?: QuizResult;
+  banned?: boolean;
 };
 
 type WakeLockHandle = { release: () => Promise<void> };
 
 const BACKGROUND_MUSIC_SRC = "/quiz-backsound.mp3";
+const MAX_VIOLATIONS = 3;
 
 function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -60,6 +64,7 @@ export function QuizPlayer({ code }: { code: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [examStarted, setExamStarted] = useState(false);
   const [violations, setViolations] = useState(0);
+  const [banned, setBanned] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [violationMessage, setViolationMessage] = useState("");
   const [error, setError] = useState("");
@@ -68,6 +73,7 @@ export function QuizPlayer({ code }: { code: string }) {
   const audioRef = useRef<AudioContext | null>(null);
   const backgroundMusicRef = useRef<HTMLAudioElement | null>(null);
   const wakeLockRef = useRef<WakeLockHandle | null>(null);
+  const violationsRef = useRef(0);
   const lastViolationRef = useRef(0);
   const armedAtRef = useRef(Number.POSITIVE_INFINITY);
 
@@ -78,7 +84,11 @@ export function QuizPlayer({ code }: { code: string }) {
       if (!response.ok)
         throw new Error(data.error ?? "Ruang kuis gagal dimuat.");
       setRoom(data);
+      violationsRef.current = data.participant.violations;
       setViolations(data.participant.violations);
+      if (data.banned || data.participant.violations >= MAX_VIOLATIONS) {
+        setBanned(true);
+      }
       if (data.result) setResult(data.result);
       if (data.questions.length) {
         setAnswers((previous) =>
@@ -98,11 +108,11 @@ export function QuizPlayer({ code }: { code: string }) {
   }, [code]);
 
   useEffect(() => {
-    if (result) return;
+    if (result || banned) return;
     void load();
     const timer = window.setInterval(() => void load(), 2500);
     return () => window.clearInterval(timer);
-  }, [load, result]);
+  }, [banned, load, result]);
 
   useEffect(() => {
     const music = new Audio(BACKGROUND_MUSIC_SRC);
@@ -169,8 +179,10 @@ export function QuizPlayer({ code }: { code: string }) {
   }, [stopBackgroundMusic]);
 
   useEffect(() => {
-    if (result || room?.quiz.status === "finished") void releaseExamMode();
-  }, [releaseExamMode, result, room?.quiz.status]);
+    if (result || banned || room?.quiz.status === "finished") {
+      void releaseExamMode();
+    }
+  }, [banned, releaseExamMode, result, room?.quiz.status]);
 
   const playAlarm = useCallback(() => {
     const audio = audioRef.current;
@@ -197,19 +209,48 @@ export function QuizPlayer({ code }: { code: string }) {
   const recordViolation = useCallback(
     (reason: string) => {
       const now = Date.now();
-      if (now < armedAtRef.current || now - lastViolationRef.current < 1500)
+      if (
+        banned ||
+        violationsRef.current >= MAX_VIOLATIONS ||
+        now < armedAtRef.current ||
+        now - lastViolationRef.current < 1500
+      ) {
         return;
+      }
       lastViolationRef.current = now;
-      setViolationMessage(reason);
-      setViolations((value) => value + 1);
+      const nextViolations = violationsRef.current + 1;
+      violationsRef.current = nextViolations;
+      setViolations(nextViolations);
       playAlarm();
+
+      if (nextViolations >= MAX_VIOLATIONS) {
+        setViolationMessage("");
+        setBanned(true);
+      } else {
+        setViolationMessage(reason);
+      }
+
       void fetch(`/api/rooms/${code}/violation`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ reason }),
-      });
+      })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const data: { violations?: number; banned?: boolean } =
+            await response.json();
+          if (typeof data.violations === "number") {
+            violationsRef.current = data.violations;
+            setViolations(data.violations);
+          }
+          if (data.banned || (data.violations ?? 0) >= MAX_VIOLATIONS) {
+            setViolationMessage("");
+            setBanned(true);
+          }
+        })
+        .catch(() => undefined);
     },
-    [code, playAlarm],
+    [banned, code, playAlarm],
   );
 
   const requestFullscreen = useCallback(async () => {
@@ -251,7 +292,8 @@ export function QuizPlayer({ code }: { code: string }) {
   }
 
   useEffect(() => {
-    if (!examStarted || result || room?.quiz.status !== "live") return;
+    if (!examStarted || result || banned || room?.quiz.status !== "live")
+      return;
 
     const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -297,11 +339,18 @@ export function QuizPlayer({ code }: { code: string }) {
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
-  }, [examStarted, recordViolation, result, room?.quiz.status]);
+  }, [banned, examStarted, recordViolation, result, room?.quiz.status]);
 
   const submit = useCallback(
     async (allowIncomplete = false) => {
-      if (submitting || result) return;
+      if (
+        submitting ||
+        result ||
+        banned ||
+        violationsRef.current >= MAX_VIOLATIONS
+      ) {
+        return;
+      }
       if (!allowIncomplete && answers.some((answer) => answer === null)) {
         setError("Jawab semua soal sebelum mengirim.");
         return;
@@ -319,17 +368,29 @@ export function QuizPlayer({ code }: { code: string }) {
       const data = await response.json();
       setSubmitting(false);
       if (!response.ok) {
+        if (response.status === 403) {
+          setBanned(true);
+          await releaseExamMode();
+          return;
+        }
         setError(data.error ?? "Jawaban gagal dikirim.");
         return;
       }
       setResult(data);
       await releaseExamMode();
     },
-    [answers, code, releaseExamMode, result, submitting],
+    [answers, banned, code, releaseExamMode, result, submitting],
   );
 
   useEffect(() => {
-    if (!room?.quiz.ends_at || room.quiz.status !== "live" || result) return;
+    if (
+      !room?.quiz.ends_at ||
+      room.quiz.status !== "live" ||
+      result ||
+      banned
+    ) {
+      return;
+    }
     const updateTimer = () => {
       const remaining = Math.max(
         0,
@@ -338,12 +399,26 @@ export function QuizPlayer({ code }: { code: string }) {
         ),
       );
       setRemainingSeconds(remaining);
-      if (remaining === 0 && examStarted) void submit(true);
+      if (
+        remaining === 0 &&
+        examStarted &&
+        !banned &&
+        violationsRef.current < MAX_VIOLATIONS
+      ) {
+        void submit(true);
+      }
     };
     updateTimer();
     const timer = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(timer);
-  }, [examStarted, result, room?.quiz.ends_at, room?.quiz.status, submit]);
+  }, [
+    banned,
+    examStarted,
+    result,
+    room?.quiz.ends_at,
+    room?.quiz.status,
+    submit,
+  ]);
 
   function selectAnswer(index: number) {
     setAnswers((previous) =>
@@ -372,6 +447,58 @@ export function QuizPlayer({ code }: { code: string }) {
   }
 
   if (!room) return null;
+
+  if (banned || violations >= MAX_VIOLATIONS) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-neutral-950 p-4 text-white">
+        <section className="w-full max-w-lg rounded-[2rem] border border-red-500/30 bg-gradient-to-b from-red-950/90 to-neutral-950 p-8 text-center shadow-2xl shadow-red-950/50 sm:p-10">
+          <span className="mx-auto flex size-20 items-center justify-center rounded-full border border-red-400/30 bg-red-500/20 text-red-400">
+            <Ban className="size-10" />
+          </span>
+          <span className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-red-400/30 bg-red-500/15 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-red-300">
+            <ShieldAlert className="size-3.5" /> Diblokir Permanen ·{" "}
+            {Math.max(violations, MAX_VIOLATIONS)}/{MAX_VIOLATIONS} Pelanggaran
+          </span>
+          <h1 className="mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">
+            Anda Dikeluarkan dari Kuis
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-red-100/85 sm:text-base">
+            Hai{" "}
+            <span className="font-bold text-white">
+              {room.participant.name}
+            </span>
+            , sesi Anda pada kuis{" "}
+            <span className="font-bold text-white">{room.quiz.title}</span>{" "}
+            telah dihentikan karena melakukan{" "}
+            <span className="font-bold text-red-300">
+              {MAX_VIOLATIONS} kali pelanggaran
+            </span>{" "}
+            mode ujian.
+          </p>
+          <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-950/60 p-4 text-xs leading-relaxed text-red-200/90">
+            Akses Anda ke kuis ini telah di-ban secara permanen dan Anda tidak
+            dapat memasuki kembali kuis ini. Status pelanggaran telah tercatat
+            di dashboard pengajar.
+          </div>
+          <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
+            <Button
+              asChild
+              className="h-11 flex-1 rounded-xl bg-white font-bold text-neutral-950 hover:bg-neutral-100"
+            >
+              <Link href="/">Kembali ke Beranda</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 flex-1 rounded-xl border-white/15 bg-white/5 font-bold text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/join">Gabung Kuis Lain</Link>
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   if (result) {
     return (
@@ -512,7 +639,18 @@ export function QuizPlayer({ code }: { code: string }) {
             <li className="flex gap-3">
               <ShieldAlert className="mt-0.5 size-4 shrink-0 text-orange-400" />
               Pindah tab, minimize, keluar fullscreen, dan shortcut browser akan
-              dicatat.
+              dicatat sebagai pelanggaran.
+            </li>
+            <li className="flex gap-3">
+              <Ban className="mt-0.5 size-4 shrink-0 text-red-400" />
+              <span>
+                Batas maksimal{" "}
+                <strong className="font-bold text-red-300">
+                  {MAX_VIOLATIONS} kali pelanggaran
+                </strong>{" "}
+                — pelanggaran ke-{MAX_VIOLATIONS} otomatis mengeluarkan (ban)
+                Anda secara permanen dari kuis ini.
+              </span>
             </li>
             <li className="flex gap-3">
               <AlarmClock className="mt-0.5 size-4 shrink-0 text-orange-400" />
@@ -530,6 +668,7 @@ export function QuizPlayer({ code }: { code: string }) {
             sekolah terkelola.
           </div>
           <Button
+            type="button"
             onClick={startExam}
             className="mt-7 h-12 w-full rounded-xl bg-orange-600 font-bold text-white hover:bg-orange-500"
           >
@@ -542,6 +681,7 @@ export function QuizPlayer({ code }: { code: string }) {
 
   const question = room.questions[current];
   const progress = Math.round(((current + 1) / room.questions.length) * 100);
+  const remainingChances = Math.max(0, MAX_VIOLATIONS - violations);
 
   return (
     <main className="min-h-screen bg-[#fffaf5] px-4 py-6 sm:px-6 sm:py-10">
@@ -549,12 +689,18 @@ export function QuizPlayer({ code }: { code: string }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-red-950/90 p-4 text-white backdrop-blur">
           <section className="w-full max-w-md rounded-[2rem] border border-red-400/30 bg-red-950 p-7 text-center shadow-2xl">
             <AlarmClock className="mx-auto size-14 animate-pulse text-red-300" />
-            <h2 className="mt-5 text-2xl font-black">Pelanggaran terdeteksi</h2>
+            <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-red-400/30 bg-red-500/20 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-red-200">
+              Pelanggaran {violations} dari {MAX_VIOLATIONS}
+            </span>
+            <h2 className="mt-3 text-2xl font-black">Pelanggaran terdeteksi</h2>
             <p className="mt-3 text-red-100">{violationMessage}</p>
-            <p className="mt-2 text-sm text-red-300">
-              Kejadian ini sudah dicatat dan terlihat oleh pengajar.
+            <p className="mt-3 rounded-xl border border-red-400/25 bg-red-900/50 px-3.5 py-2.5 text-xs font-semibold leading-relaxed text-red-200">
+              {remainingChances === 1
+                ? "Peringatan terakhir! 1 pelanggaran lagi akan mengeluarkan dan mem-ban Anda secara permanen dari kuis ini."
+                : `Sisa ${remainingChances} kesempatan sebelum Anda dikeluarkan dan di-ban dari kuis ini.`}
             </p>
             <Button
+              type="button"
               onClick={resumeExam}
               className="mt-6 h-11 rounded-xl bg-white font-bold text-red-800 hover:bg-red-50"
             >
@@ -630,8 +776,9 @@ export function QuizPlayer({ code }: { code: string }) {
               Soal {current + 1}
             </p>
             {violations > 0 && (
-              <span className="flex items-center gap-1 text-xs font-bold text-red-600">
-                <ShieldAlert className="size-3.5" /> {violations} pelanggaran
+              <span className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-600">
+                <ShieldAlert className="size-3.5" /> {violations}/
+                {MAX_VIOLATIONS} pelanggaran
               </span>
             )}
           </div>

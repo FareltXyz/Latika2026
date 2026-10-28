@@ -1,4 +1,8 @@
-import { getParticipantCredentials } from "@/lib/participant";
+import {
+  addBannedQuizId,
+  getParticipantCredentials,
+  MAX_QUIZ_VIOLATIONS,
+} from "@/lib/participant";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(
@@ -46,6 +50,14 @@ export async function POST(
     );
   }
 
+  if (participant.violations >= MAX_QUIZ_VIOLATIONS) {
+    await addBannedQuizId(quiz.id);
+    return Response.json({
+      violations: participant.violations,
+      banned: true,
+    });
+  }
+
   const violations = participant.violations + 1;
   const { error } = await admin
     .from("participants")
@@ -59,9 +71,16 @@ export async function POST(
     );
   }
 
+  const banned = violations >= MAX_QUIZ_VIOLATIONS;
+  if (banned) {
+    await addBannedQuizId(quiz.id);
+  }
+
   console.warn("Exam focus violation", {
     participantId: participant.id,
+    violations,
+    banned,
     reason,
   });
-  return Response.json({ violations });
+  return Response.json({ violations, banned });
 }

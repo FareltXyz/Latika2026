@@ -1,4 +1,9 @@
-import { getParticipantCredentials } from "@/lib/participant";
+import {
+  addBannedQuizId,
+  getBannedQuizIds,
+  getParticipantCredentials,
+  MAX_QUIZ_VIOLATIONS,
+} from "@/lib/participant";
 import { buildQuizResult } from "@/lib/quiz-result";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -40,19 +45,37 @@ export async function GET(
     quiz.status = "finished";
   }
 
-  const { data: participant } = await admin
-    .from("participants")
-    .select("id, name, score, violations, answered_at")
-    .eq("id", credentials.id)
-    .eq("access_token", credentials.token)
-    .eq("quiz_id", quiz.id)
-    .maybeSingle();
+  const [{ data: participant }, bannedQuizIds] = await Promise.all([
+    admin
+      .from("participants")
+      .select("id, name, score, violations, answered_at")
+      .eq("id", credentials.id)
+      .eq("access_token", credentials.token)
+      .eq("quiz_id", quiz.id)
+      .maybeSingle(),
+    getBannedQuizIds(),
+  ]);
 
   if (!participant)
     return Response.json(
       { error: "Sesi peserta tidak valid." },
       { status: 401 },
     );
+
+  if (
+    participant.violations >= MAX_QUIZ_VIOLATIONS ||
+    bannedQuizIds.includes(quiz.id)
+  ) {
+    if (!bannedQuizIds.includes(quiz.id)) {
+      await addBannedQuizId(quiz.id);
+    }
+    return Response.json({
+      quiz,
+      participant,
+      questions: [],
+      banned: true,
+    });
+  }
 
   if (participant.answered_at && participant.score !== null) {
     const [{ data: questions }, { data: submission }] = await Promise.all([

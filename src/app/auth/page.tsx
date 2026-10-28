@@ -1,15 +1,24 @@
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AuthForm } from "@/components/app/auth-form";
 import { Brand } from "@/components/app/brand";
+import { getCurrentUserId } from "@/lib/auth";
 
 export default async function AuthPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { error } = await searchParams;
+  const [userId, { error }] = await Promise.all([
+    getCurrentUserId(),
+    searchParams,
+  ]);
+
+  if (userId) {
+    redirect("/dashboard");
+  }
 
   return (
     <main className="min-h-screen bg-[#fffaf5] px-4 py-8 sm:px-6">

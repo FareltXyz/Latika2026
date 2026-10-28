@@ -52,8 +52,8 @@ export function AuthForm({ initialError }: { initialError?: string }) {
         return;
       }
 
-      router.push("/dashboard");
       router.refresh();
+      router.replace("/dashboard");
       return;
     }
 
@@ -68,8 +68,8 @@ export function AuthForm({ initialError }: { initialError?: string }) {
       return;
     }
 
-    router.push("/dashboard");
     router.refresh();
+    router.replace("/dashboard");
   }
 
   async function handleGoogle() {

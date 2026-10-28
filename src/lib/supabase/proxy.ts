@@ -15,7 +15,6 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
-    pathname === "/" ||
     PUBLIC_SESSIONLESS_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   ) {
     return NextResponse.next({ request });

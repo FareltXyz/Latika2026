@@ -1,13 +1,24 @@
 import { cookies } from "next/headers";
 
+import {
+  addBannedQuizId,
+  getBannedQuizIds,
+  getParticipantCredentials,
+  MAX_QUIZ_VIOLATIONS,
+} from "@/lib/participant";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+const BAN_ERROR_MESSAGE =
+  "Anda telah dikeluarkan (di-ban) dari kuis ini karena melakukan 3 kali pelanggaran dan tidak dapat masuk kembali.";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? "")
     .trim()
     .toUpperCase();
-  const name = String(body.name ?? "").trim();
+  const normalizedName = String(body.name ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
 
   if (!/^[A-Z0-9]{6}$/.test(code)) {
     return Response.json(
@@ -15,7 +26,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (name.length < 2 || name.length > 40) {
+  if (normalizedName.length < 2 || normalizedName.length > 40) {
     return Response.json(
       { error: "Nama harus 2–40 karakter." },
       { status: 400 },
@@ -52,6 +63,48 @@ export async function POST(request: Request) {
     );
   }
 
+  const [bannedQuizIds, existingCreds, { data: bannedParticipants }] =
+    await Promise.all([
+      getBannedQuizIds(),
+      getParticipantCredentials(),
+      admin
+        .from("participants")
+        .select("name")
+        .eq("quiz_id", quiz.id)
+        .gte("violations", MAX_QUIZ_VIOLATIONS),
+    ]);
+
+  if (bannedQuizIds.includes(quiz.id)) {
+    return Response.json({ error: BAN_ERROR_MESSAGE }, { status: 403 });
+  }
+
+  if (existingCreds) {
+    const { data: existingParticipant } = await admin
+      .from("participants")
+      .select("id, violations")
+      .eq("id", existingCreds.id)
+      .eq("access_token", existingCreds.token)
+      .eq("quiz_id", quiz.id)
+      .maybeSingle();
+
+    if (
+      existingParticipant &&
+      existingParticipant.violations >= MAX_QUIZ_VIOLATIONS
+    ) {
+      await addBannedQuizId(quiz.id);
+      return Response.json({ error: BAN_ERROR_MESSAGE }, { status: 403 });
+    }
+  }
+
+  const isNameBanned = (bannedParticipants ?? []).some(
+    (item) =>
+      item.name.replace(/\s+/g, " ").trim().toLowerCase() ===
+      normalizedName.toLowerCase(),
+  );
+  if (isNameBanned) {
+    return Response.json({ error: BAN_ERROR_MESSAGE }, { status: 403 });
+  }
+
   const { count: participantCount } = await admin
     .from("participants")
     .select("id", { count: "exact", head: true })
@@ -62,7 +115,7 @@ export async function POST(request: Request) {
 
   const { data: participant, error } = await admin
     .from("participants")
-    .insert({ quiz_id: quiz.id, name })
+    .insert({ quiz_id: quiz.id, name: normalizedName })
     .select("id, access_token")
     .single();
 

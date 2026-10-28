@@ -1,4 +1,8 @@
-import { getParticipantCredentials } from "@/lib/participant";
+import {
+  getBannedQuizIds,
+  getParticipantCredentials,
+  MAX_QUIZ_VIOLATIONS,
+} from "@/lib/participant";
 import { buildQuizResult } from "@/lib/quiz-result";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -40,19 +44,34 @@ export async function POST(
     );
   }
 
-  const { data: participant } = await admin
-    .from("participants")
-    .select("id, answered_at")
-    .eq("id", credentials.id)
-    .eq("access_token", credentials.token)
-    .eq("quiz_id", quiz.id)
-    .maybeSingle();
+  const [{ data: participant }, bannedQuizIds] = await Promise.all([
+    admin
+      .from("participants")
+      .select("id, violations, answered_at")
+      .eq("id", credentials.id)
+      .eq("access_token", credentials.token)
+      .eq("quiz_id", quiz.id)
+      .maybeSingle(),
+    getBannedQuizIds(),
+  ]);
 
   if (!participant)
     return Response.json(
       { error: "Sesi peserta tidak valid." },
       { status: 401 },
     );
+  if (
+    participant.violations >= MAX_QUIZ_VIOLATIONS ||
+    bannedQuizIds.includes(quiz.id)
+  ) {
+    return Response.json(
+      {
+        error:
+          "Anda telah dikeluarkan dari kuis ini karena mencapai batas 3 kali pelanggaran.",
+      },
+      { status: 403 },
+    );
+  }
   if (participant.answered_at) {
     return Response.json(
       { error: "Jawaban sudah pernah dikirim." },

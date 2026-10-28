@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Ban,
   Check,
   CircleStop,
   Clipboard,
@@ -296,35 +297,59 @@ export function HostConsole({ quizId }: { quizId: string }) {
                 Belum ada peserta bergabung.
               </p>
             )}
-            {data.participants.map((participant, index) => (
-              <div
-                key={participant.id}
-                className="flex items-center gap-3 rounded-xl border border-neutral-100 p-3"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700">
-                  {index + 1}
-                </span>
-                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800">
-                  {participant.name}
-                </p>
-                {participant.violations > 0 && (
-                  <span
-                    title="Pelanggaran pindah tab atau keluar fullscreen"
-                    className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-700"
-                  >
-                    <ShieldAlert className="size-3.5" />{" "}
-                    {participant.violations}
-                  </span>
-                )}
-                <span
-                  className={`text-sm font-bold ${participant.answered_at ? "text-emerald-600" : "text-neutral-400"}`}
+            {data.participants.map((participant, index) => {
+              const isBanned =
+                participant.violations >= 3 && !participant.answered_at;
+              return (
+                <div
+                  key={participant.id}
+                  className={`flex items-center gap-3 rounded-xl border p-3 ${
+                    isBanned
+                      ? "border-red-200 bg-red-50/40"
+                      : "border-neutral-100"
+                  }`}
                 >
-                  {participant.answered_at
-                    ? `${participant.score}`
-                    : "Menunggu"}
-                </span>
-              </div>
-            ))}
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                      isBanned
+                        ? "bg-red-100 text-red-700"
+                        : "bg-orange-100 text-orange-700"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800">
+                    {participant.name}
+                  </p>
+                  {participant.violations > 0 && (
+                    <span
+                      title={
+                        isBanned
+                          ? "Peserta dikeluarkan (di-ban) karena mencapai 3 pelanggaran"
+                          : "Pelanggaran pindah tab atau keluar fullscreen"
+                      }
+                      className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-700"
+                    >
+                      <ShieldAlert className="size-3.5" />{" "}
+                      {participant.violations}/3
+                    </span>
+                  )}
+                  {isBanned ? (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1 text-xs font-extrabold text-white">
+                      <Ban className="size-3" /> Di-ban
+                    </span>
+                  ) : (
+                    <span
+                      className={`text-sm font-bold ${participant.answered_at ? "text-emerald-600" : "text-neutral-400"}`}
+                    >
+                      {participant.answered_at
+                        ? `${participant.score}`
+                        : "Menunggu"}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 

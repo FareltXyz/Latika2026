@@ -15,7 +15,11 @@ const navLinks = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export function Navbar() {
+export function Navbar({
+  isAuthenticated = false,
+}: {
+  isAuthenticated?: boolean;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -57,21 +61,36 @@ export function Navbar() {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-2.5 md:flex">
-          <Button
-            asChild
-            variant="ghost"
-            className="h-10 px-5 text-sm font-semibold text-neutral-700 hover:text-orange-600"
-          >
-            <Link href="/auth">Masuk</Link>
-          </Button>
-          <Button
-            asChild
-            className="h-10 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-xl hover:shadow-orange-500/30"
-          >
-            <Link href="/dashboard">
-              Mulai Gratis <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              asChild
+              variant="secondary"
+              className="h-10 rounded-xl bg-secondary px-5 text-sm font-bold text-primary shadow-lg shadow-neutral-950/15 transition-all hover:-translate-y-0.5 hover:bg-neutral-800 hover:text-orange-400"
+            >
+              <Link href="/dashboard">
+                Dashboard <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button
+                asChild
+                variant="ghost"
+                className="h-10 px-5 text-sm font-semibold text-neutral-700 hover:text-orange-600"
+              >
+                <Link href="/auth">Masuk</Link>
+              </Button>
+              <Button
+                asChild
+                className="h-10 rounded-xl bg-orange-600 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-xl hover:shadow-orange-500/30"
+              >
+                <Link href="/dashboard">
+                  Mulai Gratis{" "}
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -109,22 +128,38 @@ export function Navbar() {
             </Link>
           ))}
           <div className="flex flex-col gap-2.5 pt-3">
-            <Button
-              asChild
-              variant="outline"
-              className="h-11 rounded-xl border-neutral-300 text-sm font-semibold text-neutral-800 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
-            >
-              <Link href="/auth">Masuk</Link>
-            </Button>
-            <Button
-              asChild
-              className="h-11 rounded-xl bg-orange-600 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 hover:bg-orange-700"
-            >
-              <Link href="/dashboard">
-                Mulai Gratis{" "}
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                asChild
+                variant="secondary"
+                className="h-11 rounded-xl bg-secondary text-sm font-bold text-primary shadow-lg shadow-neutral-950/15 hover:bg-neutral-800 hover:text-orange-400"
+              >
+                <Link href="/dashboard" onClick={() => setOpen(false)}>
+                  Dashboard <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-11 rounded-xl border-neutral-300 text-sm font-semibold text-neutral-800 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+                >
+                  <Link href="/auth" onClick={() => setOpen(false)}>
+                    Masuk
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  className="h-11 rounded-xl bg-orange-600 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 hover:bg-orange-700"
+                >
+                  <Link href="/dashboard" onClick={() => setOpen(false)}>
+                    Mulai Gratis{" "}
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
