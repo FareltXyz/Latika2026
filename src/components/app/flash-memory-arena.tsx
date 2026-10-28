@@ -20,6 +20,7 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,7 @@ export function FlashMemoryArena({
 }: {
   initialSet: FlashMemorySetDetail;
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<ArenaMode>("match");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [bestScore, setBestScore] = useState(initialSet.best_score);
@@ -337,12 +339,13 @@ export function FlashMemoryArena({
             setBestTimeSeconds(data.stats.best_time_seconds);
             setPlaysCount(data.stats.plays_count);
           }
+          router.refresh();
         }
       } catch {
         // Keep optimistic local score if network blips
       }
     },
-    [bestScore, initialSet.id],
+    [bestScore, initialSet.id, router],
   );
 
   // =========================================================================

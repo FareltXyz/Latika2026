@@ -120,6 +120,7 @@ export function QuizBuilder() {
         );
       }
       router.push(`/dashboard/quiz/${data.quizId}`);
+      router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Kuis gagal dibuat.");
       setLoading(false);

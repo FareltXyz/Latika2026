@@ -155,18 +155,19 @@ export async function countFlashMemoryGeneratedToday(
   startOfDay.setUTCHours(0, 0, 0, 0);
   const startIso = startOfDay.toISOString();
 
-  const { count, error } = await admin
-    .from("flash_memory_sets")
-    .select("id", { count: "exact", head: true })
-    .eq("owner_id", userId)
-    .gte("created_at", startIso);
+  const [{ count, error }, storageSummaries] = await Promise.all([
+    admin
+      .from("flash_memory_sets")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId)
+      .gte("created_at", startIso),
+    listStorageSummaries(admin, userId),
+  ]);
 
   if (error && !isMissingTableError(error)) {
     throw error;
   }
 
-  // Note: PostgREST HEAD on a missing table may return status 204 with null count or PGRST205
-  const storageSummaries = await listStorageSummaries(admin, userId);
   const storageToday = storageSummaries.filter(
     (item) => item.created_at >= startIso,
   ).length;
@@ -178,13 +179,16 @@ export async function listFlashMemorySets(
   userId: string,
 ): Promise<FlashMemorySetSummary[]> {
   const admin = createAdminClient();
-  const { data: rows, error } = await admin
-    .from("flash_memory_sets")
-    .select(
-      "id, title, description, source_name, difficulty, best_score, best_time_seconds, plays_count, created_at, flash_memory_cards(count)",
-    )
-    .eq("owner_id", userId)
-    .order("created_at", { ascending: false });
+  const [{ data: rows, error }, storageSummaries] = await Promise.all([
+    admin
+      .from("flash_memory_sets")
+      .select(
+        "id, title, description, source_name, difficulty, best_score, best_time_seconds, plays_count, created_at, flash_memory_cards(count)",
+      )
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false }),
+    listStorageSummaries(admin, userId),
+  ]);
 
   if (error && !isMissingTableError(error)) {
     throw error;
@@ -207,7 +211,6 @@ export async function listFlashMemorySets(
     created_at: row.created_at,
   }));
 
-  const storageSummaries = await listStorageSummaries(admin, userId);
   if (!storageSummaries.length) return dbSummaries;
 
   const seen = new Set(dbSummaries.map((item) => item.id));
@@ -305,26 +308,30 @@ export async function getFlashMemorySet(
   if (!isValidUuid(id) || !isValidUuid(userId)) return null;
   const admin = createAdminClient();
 
-  const { data: setRow, error: setError } = await admin
-    .from("flash_memory_sets")
-    .select(
-      "id, title, description, source_name, difficulty, best_score, best_time_seconds, plays_count, created_at",
-    )
-    .eq("id", id)
-    .eq("owner_id", userId)
-    .maybeSingle();
+  const [
+    { data: setRow, error: setError },
+    { data: cardRows, error: cardsError },
+  ] = await Promise.all([
+    admin
+      .from("flash_memory_sets")
+      .select(
+        "id, title, description, source_name, difficulty, best_score, best_time_seconds, plays_count, created_at",
+      )
+      .eq("id", id)
+      .eq("owner_id", userId)
+      .maybeSingle(),
+    admin
+      .from("flash_memory_cards")
+      .select("id, position, term, definition, category, memory_tip")
+      .eq("set_id", id)
+      .order("position", { ascending: true }),
+  ]);
 
   if (setError && !isMissingTableError(setError)) {
     throw setError;
   }
 
   if (setRow) {
-    const { data: cardRows, error: cardsError } = await admin
-      .from("flash_memory_cards")
-      .select("id, position, term, definition, category, memory_tip")
-      .eq("set_id", id)
-      .order("position", { ascending: true });
-
     if (cardsError && !isMissingTableError(cardsError)) {
       throw cardsError;
     }

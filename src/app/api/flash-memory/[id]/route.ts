@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getCurrentUserId } from "@/lib/auth";
@@ -73,6 +74,7 @@ export async function PATCH(
       );
     }
 
+    revalidatePath("/dashboard/flash-memory");
     return Response.json({ stats: updated });
   } catch (error) {
     console.error("Failed to update flash memory stats", error);
@@ -102,6 +104,7 @@ export async function DELETE(
       );
     }
 
+    revalidatePath("/dashboard/flash-memory");
     return Response.json({ ok: true });
   } catch (error) {
     console.error("Failed to delete flash memory set", error);

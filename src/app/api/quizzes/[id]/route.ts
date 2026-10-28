@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { getCurrentUserId } from "@/lib/auth";
 import { buildQuizResult } from "@/lib/quiz-result";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -134,6 +136,7 @@ export async function PATCH(
       { status: 500 },
     );
 
+  revalidatePath("/dashboard");
   return Response.json(update);
 }
 
@@ -173,5 +176,6 @@ export async function DELETE(
     return Response.json({ error: "Kuis gagal dihapus." }, { status: 500 });
   }
 
+  revalidatePath("/dashboard");
   return Response.json({ deleted: true });
 }

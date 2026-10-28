@@ -2,6 +2,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { BackLink } from "@/components/app/back-link";
 import { FlashMemoryArena } from "@/components/app/flash-memory-arena";
 import { getCurrentUserId } from "@/lib/auth";
 import { getFlashMemorySet } from "@/lib/flash-memory-store";
@@ -42,12 +43,9 @@ export default async function FlashMemoryArenaPage({
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/dashboard/flash-memory"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-blue-700"
-        >
-          <ArrowLeft className="size-4" /> Semua Arena Flash Memory
-        </Link>
+        <BackLink href="/dashboard/flash-memory" accent="blue">
+          Semua Arena Flash Memory
+        </BackLink>
         <Link
           href="/dashboard/flash-memory/create"
           className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 text-xs font-bold text-blue-800 transition hover:bg-blue-100"

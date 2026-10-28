@@ -7,6 +7,7 @@ import {
 } from "@ai-sdk/google";
 import { APICallError, generateText, NoObjectGeneratedError, Output } from "ai";
 import mammoth from "mammoth";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getCurrentUserId } from "@/lib/auth";
@@ -492,6 +493,7 @@ export async function POST(request: Request) {
       throw questionError;
     }
 
+    revalidatePath("/dashboard");
     return Response.json({ quizId: quiz.id, joinCode: quiz.join_code });
   } catch (error) {
     return generationErrorResponse(error);

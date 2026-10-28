@@ -3,6 +3,7 @@ import {
   type GoogleLanguageModelOptions,
 } from "@ai-sdk/google";
 import { APICallError, generateText, NoObjectGeneratedError, Output } from "ai";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getCurrentUserId } from "@/lib/auth";
@@ -371,6 +372,7 @@ export async function POST(request: Request) {
       cards: output.cards.slice(0, pairCount),
     });
 
+    revalidatePath("/dashboard/flash-memory");
     return Response.json({ setId: created.id });
   } catch (error) {
     return generationErrorResponse(error);

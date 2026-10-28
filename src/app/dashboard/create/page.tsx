@@ -1,17 +1,14 @@
-import { ArrowLeft, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
+import { BackLink } from "@/components/app/back-link";
 import { QuizBuilder } from "@/components/app/quiz-builder";
 
 export default function CreateQuizPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-orange-600"
-      >
-        <ArrowLeft className="size-4" /> Kembali ke dashboard
-      </Link>
+      <BackLink href="/dashboard" accent="orange">
+        Kembali ke dashboard
+      </BackLink>
       <div className="mb-8 mt-6">
         <div className="flex items-center gap-2 text-sm font-bold text-orange-600">
           <Sparkles className="size-4" /> Generator kuis AI

@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { QuestionEditor } from "@/components/app/question-editor";
@@ -41,6 +42,7 @@ type HostData = {
 };
 
 export function HostConsole({ quizId }: { quizId: string }) {
+  const router = useRouter();
   const [data, setData] = useState<HostData | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
@@ -88,6 +90,7 @@ export function HostConsole({ quizId }: { quizId: string }) {
       setError(result.error ?? "Status gagal diperbarui.");
       return;
     }
+    router.refresh();
     await load();
   }
 

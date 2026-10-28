@@ -4,25 +4,17 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { Brand } from "@/components/app/brand";
-import { getCurrentUserId } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-
-export const dynamic = "force-dynamic";
+import { getCurrentAuth } from "@/lib/auth";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const userId = await getCurrentUserId();
+  const { userId, email } = await getCurrentAuth();
   if (!userId) redirect("/auth");
 
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const email =
-    typeof data?.claims?.email === "string"
-      ? data.claims.email
-      : "Akun pengajar";
+  const displayEmail = email ?? "Akun pengajar";
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -54,7 +46,7 @@ export default async function DashboardLayout({
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                title={`Keluar dari ${email}`}
+                title={`Keluar dari ${displayEmail}`}
                 className="flex size-10 items-center justify-center rounded-xl text-neutral-500 hover:bg-red-50 hover:text-red-600"
               >
                 <LogOut className="size-4" />
